@@ -1,6 +1,7 @@
 import cv2
 import re
 import time
+from collections import Counter, deque
 
 import easyocr
 
@@ -9,10 +10,16 @@ reader = easyocr.Reader(['en'], gpu=False)
 
 last_printed_plate = ""
 last_ocr_time = 0.0
-ocr_interval_seconds = 0.7
+ocr_interval_seconds = 0.9
 blocked_words = {"PERSON", "CELLPHONE", "CELL", "PHONE"}
 show_candidate_boxes = True
 show_debug_counts = True
+max_candidates_per_tick = 3
+min_confidence = 0.4
+recent_plate_window = deque(maxlen=8)
+min_consensus_hits = 4
+final_plate = ""
+finalized_at = 0.0
 
 
 def find_plate_candidates(gray_frame):
@@ -61,6 +68,9 @@ while True:
         if show_debug_counts:
             print(f"OCR tick: {len(candidates)} candidate(s)", flush=True)
 
+        candidates = sorted(candidates, key=lambda c: c[2] * c[3], reverse=True)
+        candidates = candidates[:max_candidates_per_tick]
+
         for x, y, w, h in candidates:
             roi = gray[y:y + h, x:x + w]
             ocr_results = reader.readtext(
@@ -77,12 +87,22 @@ while True:
                     continue
                 if not re.fullmatch(r'[A-Z0-9]{4,8}', cleaned):
                     continue
-                if confidence < 0.3:
+                if confidence < min_confidence:
                     continue
-                if cleaned != last_printed_plate:
-                    last_printed_plate = cleaned
-                    timestamp = time.strftime("%H:%M:%S")
-                    print(f"[{timestamp}] License plate detected: {cleaned}", flush=True)
+                if not final_plate:
+                    recent_plate_window.append(cleaned)
+                    most_common = Counter(recent_plate_window).most_common(1)
+                    if most_common:
+                        consensus_plate, hits = most_common[0]
+                        if hits >= min_consensus_hits and consensus_plate != last_printed_plate:
+                            last_printed_plate = consensus_plate
+                            final_plate = consensus_plate
+                            finalized_at = time.time()
+                            timestamp = time.strftime("%H:%M:%S")
+                            print(
+                                f"[{timestamp}] License plate finalized: {consensus_plate}",
+                                flush=True,
+                            )
                 cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
                 cv2.putText(
                     frame,
@@ -96,6 +116,17 @@ while True:
 
             if show_candidate_boxes:
                 cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 165, 0), 1)
+
+    if final_plate:
+        cv2.putText(
+            frame,
+            f"FINAL: {final_plate}",
+            (10, 30),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            1.0,
+            (0, 255, 0),
+            2,
+        )
 
     # Display the frame
     cv2.imshow('YOLO Object Detection', frame)
