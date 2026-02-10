@@ -32,26 +32,26 @@ Prerequisites
   
 ---
 ## Installation and Setup
-Clone the repo
+Clone the repo  
 
-bash   git clone https://github.com/yourusername/FindMySpot.git
-   cd FindMySpot
+bash   git clone https://github.com/yourusername/FindMySpot.git  
+cd FindMySpot  
 
-Install backend dependencies
+Install backend dependencies  
 
-bash   cd backend
-   npm install
+bash   cd backend  
+npm install  
 
-Install AI dependencies
+Install AI dependencies  
 
-bash   cd ai-service
-   pip install -r requirements.txt
+bash   cd ai-service  
+pip install -r requirements.txt  
 
-Set up the database
+Set up the database  
 
-bash   psql -U postgres
-   CREATE DATABASE findmyspot;
-   \q
+bash   psql -U postgres  
+CREATE DATABASE findmyspot;  
+\q  
    
    # Run migrations
    npm run migrate
@@ -59,13 +59,12 @@ bash   psql -U postgres
 Configure environment variables
 
 bash   cp .env.example .env
-   # Edit .env with your database credentials and API keys
 
-Start the backend
+Start the backend  
 
-bash   npm run dev
+bash   npm run dev  
 
-Install mobile app dependencies
+Install mobile app dependencies  
 
 bash   cd ../mobile-app
    npm install
@@ -75,7 +74,6 @@ Run the mobile app
 bash   # For iOS
    npx react-native run-ios
    
-   # For Android
    npx react-native run-android
 
 
