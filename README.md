@@ -1,31 +1,114 @@
 # FindMySpot
-A real time **license plate detection system** using **YOLOv8** and **EasyOCR**, with webcam integration and a simple web interface.
-Detects license plates from live webcam feed and performs OCR to read the plate number.
+FindMySpot is a smart parking management system that uses AI-powered license plate recognition to automatically track your vehicle's location in parking garages. When you park, the system scans your plate and saves your spot. When you're ready to leave, just search your plate number and get directions right back to your car.
+
 ---
 ## Features
+Automatic Plate Detection - Cameras scan your license plate when you park (no manual input needed!)
+Quick Vehicle Search - Find your car by entering your license plate
+Turn-by-Turn Directions - Get guided back to your parking spot
+Manual Check-in - Backup option if the camera can't read your plate
+Real-Time Occupancy - See which spots are open or taken
+Analytics Dashboard - Track parking patterns and peak times (for facility managers)
+Security Alerts - Flag unauthorized or overstayed vehicles
 
-- Real-time license plate detection using **YOLOv8**.
-- OCR via **EasyOCR** to read license plate text.
-- Filters invalid or blocked text (e.g., `PERSON`, `CELLPHONE`).
-- Finalizes the most likely plate number using consensus from recent frames.
-- Web interface for live webcam feed and backend testing.
-- Configurable parameters for confidence, candidate boxes, and OCR intervals.
+---
+
+## Tech Stack 
+Frontend: React Native (iOS & Android)
+Backend: Node.js / Express
+Database: PostgreSQL
+AI/ML: YOLO (for license plate detection)
+OCR: Tesseract / Custom model
+Caching: Redis
+Image Processing: OpenCV
+
+## Getting Started 
+Prerequisites 
+- Node.js (v16+)
+- PostgreSQL (v13+)
+- Python 3.8+ (for AI components)
+- Redis
+- Camera hardware (for deployment)
+  
+---
+## Installation and Setup
+Clone the repo
+
+bash   git clone https://github.com/yourusername/FindMySpot.git
+   cd FindMySpot
+
+Install backend dependencies
+
+bash   cd backend
+   npm install
+
+Install AI dependencies
+
+bash   cd ai-service
+   pip install -r requirements.txt
+
+Set up the database
+
+bash   psql -U postgres
+   CREATE DATABASE findmyspot;
+   \q
+   
+   # Run migrations
+   npm run migrate
+
+Configure environment variables
+
+bash   cp .env.example .env
+   # Edit .env with your database credentials and API keys
+
+Start the backend
+
+bash   npm run dev
+
+Install mobile app dependencies
+
+bash   cd ../mobile-app
+   npm install
+
+Run the mobile app
+
+bash   # For iOS
+   npx react-native run-ios
+   
+   # For Android
+   npx react-native run-android
+
 
 ---
 
 ## Project Structure
-FindMySpot
--  app.py (Main Python script)
--  index.html (Web interface)
--   yolov8n.pt (Pre-trained YOLOv8 model)
--  README.md (This documentation)
-- requirements.txt (Python dependencies)
+FindMySpot/
+├── backend/              # Node.js API server
+│   ├── routes/          # API endpoints
+│   ├── controllers/     # Business logic
+│   ├── models/          # Database models
+│   └── middleware/      # Auth, validation, etc.
+├── ai-service/          # Python AI/ML service
+│   ├── models/          # YOLO model files
+│   ├── ocr/            # License plate OCR
+│   └── api/            # Flask API
+├── mobile-app/          # React Native app
+│   ├── screens/        # App screens
+│   ├── components/     # Reusable components
+│   └── services/       # API calls
+├── database/           # Database schemas & migrations
+└── docs/              # Documentation
 
 ---
 
-## Requirements
-- Python 3.10+
-- OpenCV (`cv2`)
-- EasyOCR
-- Ultralytics YOLO (`ultralytics`)
-- Flask
+## Team 
+Asmita Bhandari
+Mirza Sneha
+Jennifer Lopez 
+Varun Kodikal 
+Tristan Mejia
+
+---
+
+
+
