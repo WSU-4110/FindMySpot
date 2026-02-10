@@ -11,7 +11,20 @@ reader = easyocr.Reader(['en'], gpu=False)
 last_printed_plate = ""
 last_ocr_time = 0.0
 ocr_interval_seconds = 0.9
-blocked_words = {"PERSON", "CELLPHONE", "CELL", "PHONE"}
+blocked_words = {# 50 States (Cleaned for OCR)
+    "ALABAMA", "ALASKA", "ARIZONA", "ARKANSAS", "CALIFORNIA", "COLORADO", 
+    "CONNECTICUT", "DELAWARE", "FLORIDA", "GEORGIA", "HAWAII", "IDAHO", 
+    "ILLINOIS", "INDIANA", "IOWA", "KANSAS", "KENTUCKY", "LOUISIANA", 
+    "MAINE", "MARYLAND", "MASSACHUSETTS", "MICHIGAN", "MINNESOTA", 
+    "MISSISSIPPI", "MISSOURI", "MONTANA", "NEBRASKA", "NEVADA", 
+    "NEWHAMPSHIRE", "NEWJERSEY", "NEWMEXICO", "NEWYORK", "NORTHCAROLINA", 
+    "NORTHDAKOTA", "OHIO", "OKLAHOMA", "OREGON", "PENNSYLVANIA", 
+    "RHODEISLAND", "SOUTHCAROLINA", "SOUTHDAKOTA", "TENNESSEE", "TEXAS", 
+    "UTAH", "VERMONT", "VIRGINIA", "WASHINGTON", "WESTVIRGINIA", 
+    "WISCONSIN", "WYOMING",
+    
+    # Common catch-alls/Slogans
+    "WASH", "PENN", "ALOHA", "SUNSHINE", "GARDENSTATE", "EMPIRESTATE"}
 show_candidate_boxes = True
 show_debug_counts = True
 max_candidates_per_tick = 3
