@@ -14,11 +14,11 @@ Detects license plates from live webcam feed and performs OCR to read the plate 
 ---
 
 ## Project Structure
-FindMySpot/
+FindMySpot
 -  app.py # Main Python script
 -  index.html # Web interface
--   olov8n.pt # Pre-trained YOLOv8 model
--     ADME.md # This documentation
+-   yolov8n.pt # Pre-trained YOLOv8 model
+-  README.md # This documentation
 - requirements.txt # Python dependencies
 
 ---
