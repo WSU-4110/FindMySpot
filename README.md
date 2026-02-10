@@ -3,13 +3,13 @@ FindMySpot is a smart parking management system that uses AI-powered license pla
 
 ---
 ## Features
-Automatic Plate Detection - Cameras scan your license plate when you park (no manual input needed!)
-Quick Vehicle Search - Find your car by entering your license plate
-Turn-by-Turn Directions - Get guided back to your parking spot
-Manual Check-in - Backup option if the camera can't read your plate
-Real-Time Occupancy - See which spots are open or taken
-Analytics Dashboard - Track parking patterns and peak times (for facility managers)
-Security Alerts - Flag unauthorized or overstayed vehicles
+Automatic Plate Detection - Cameras scan your license plate when you park (no manual input needed!)  
+Quick Vehicle Search - Find your car by entering your license plate  
+Turn-by-Turn Directions - Get guided back to your parking spot  
+Manual Check-in - Backup option if the camera can't read your plate  
+Real-Time Occupancy - See which spots are open or taken  
+Analytics Dashboard - Track parking patterns and peak times (for facility managers)  
+Security Alerts - Flag unauthorized or overstayed vehicles  
 
 ---
 
@@ -33,54 +33,59 @@ Prerequisites
 ---
 ## Installation and Setup
 Clone the repo  
-
-bash   git clone https://github.com/yourusername/FindMySpot.git  
 cd FindMySpot  
+``` git clone https://github.com/yourusername/FindMySpot.git ``` 
+ 
 
 Install backend dependencies  
-
-bash   cd backend  
+ ```
+ cd backend  
 npm install  
-
+```
 Install AI dependencies  
-
-bash   cd ai-service  
+```
+cd ai-service  
 pip install -r requirements.txt  
-
+```
 Set up the database  
-
-bash   psql -U postgres  
+```
+psql -U postgres
+```
 CREATE DATABASE findmyspot;  
-\q  
-   
-   # Run migrations
-   npm run migrate
-
+```
+\q
+```
+Run Migrate
+```
+npm run migrate
+```
 Configure environment variables
-
-bash   cp .env.example .env
-
+```
+cp .env.example .env
+```
 Start the backend  
-
-bash   npm run dev  
+```
+npm run dev  
+```
 
 Install mobile app dependencies  
-
-bash   cd ../mobile-app
-   npm install
-
+```
+cd ../mobile-app
+npm install
+```
 Run the mobile app
 
-bash   # For iOS
+bash  
+```
    npx react-native run-ios
    
    npx react-native run-android
 
-
+```
 ---
 
 ## Project Structure
-FindMySpot/
+FindMySpot/  
 ├── backend/              # Node.js API server  
 │   ├── routes/          # API endpoints  
 │   ├── controllers/     # Business logic  
