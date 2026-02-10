@@ -14,13 +14,13 @@ Security Alerts - Flag unauthorized or overstayed vehicles
 ---
 
 ## Tech Stack 
-Frontend: React Native (iOS & Android)
-Backend: Node.js / Express
-Database: PostgreSQL
-AI/ML: YOLO (for license plate detection)
-OCR: Tesseract / Custom model
-Caching: Redis
-Image Processing: OpenCV
+Frontend: React Native (iOS & Android)  
+Backend: Node.js / Express  
+Database: PostgreSQL  
+AI/ML: YOLO (for license plate detection)  
+OCR: Tesseract / Custom model  
+Caching: Redis  
+Image Processing: OpenCV  
 
 ## Getting Started 
 Prerequisites 
@@ -83,30 +83,30 @@ bash   # For iOS
 
 ## Project Structure
 FindMySpot/
-├── backend/              # Node.js API server
-│   ├── routes/          # API endpoints
-│   ├── controllers/     # Business logic
-│   ├── models/          # Database models
-│   └── middleware/      # Auth, validation, etc.
-├── ai-service/          # Python AI/ML service
-│   ├── models/          # YOLO model files
-│   ├── ocr/            # License plate OCR
-│   └── api/            # Flask API
-├── mobile-app/          # React Native app
-│   ├── screens/        # App screens
-│   ├── components/     # Reusable components
-│   └── services/       # API calls
-├── database/           # Database schemas & migrations
-└── docs/              # Documentation
+├── backend/              # Node.js API server  
+│   ├── routes/          # API endpoints  
+│   ├── controllers/     # Business logic  
+│   ├── models/          # Database models  
+│   └── middleware/      # Auth, validation, etc.  
+├── ai-service/          # Python AI/ML service  
+│   ├── models/          # YOLO model files  
+│   ├── ocr/            # License plate OCR  
+│   └── api/            # Flask API  
+├── mobile-app/          # React Native app  
+│   ├── screens/        # App screens  
+│   ├── components/     # Reusable components  
+│   └── services/       # API calls  
+├── database/           # Database schemas & migrations  
+└── docs/              # Documentation  
 
 ---
 
 ## Team 
-Asmita Bhandari
-Mirza Sneha
-Jennifer Lopez 
-Varun Kodikal 
-Tristan Mejia
+Asmita Bhandari  
+Mirza Sneha  
+Jennifer Lopez   
+Varun Kodikal   
+Tristan Mejia  
 
 ---
 
