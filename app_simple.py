@@ -1,13 +1,33 @@
-from flask import Flask, Response, jsonify
+from flask import Flask, Response, jsonify, request
 from flask_cors import CORS
 import cv2
 import re
 import time
 from collections import Counter, deque
 import easyocr
+from database import PlateDatabase
 
 app = Flask(__name__)
 CORS(app)
+
+# Initialize EasyOCR reader
+reader = easyocr.Reader(['en'], gpu=False)
+
+# Initialize database (will attempt to connect, but won't crash if unavailable)
+try:
+    db = PlateDatabase(
+        host="localhost",
+        port=5432,
+        database="license_plate_db",
+        user="postgres",
+        password="postgres"  # Change this to your PostgreSQL password
+    )
+    database_enabled = True
+except Exception as e:
+    print(f"⚠ Database not available: {e}")
+    print("  App will run without database features")
+    db = None
+    database_enabled = False
 
 # Initialize EasyOCR reader
 reader = easyocr.Reader(['en'], gpu=False)
@@ -258,6 +278,17 @@ def generate_frames():
                                 finalized_at = time.time()
                                 timestamp = time.strftime("%H:%M:%S")
                                 print(f"[{timestamp}] ★★★ FINAL PLATE: {consensus_plate} (from {len(similar_plates)} similar) ★★★", flush=True)
+                                
+                                # Save to database
+                                if database_enabled and db:
+                                    try:
+                                        db.save_plate(
+                                            plate_number=consensus_plate,
+                                            confidence=confidence,
+                                            camera_id='webcam_0'
+                                        )
+                                    except Exception as e:
+                                        print(f"  ⚠ Failed to save to database: {e}")
                         else:
                             # Fall back to exact matching
                             most_common = Counter(recent_plate_window).most_common(1)
@@ -270,6 +301,17 @@ def generate_frames():
                                     finalized_at = time.time()
                                     timestamp = time.strftime("%H:%M:%S")
                                     print(f"[{timestamp}] ★★★ FINAL PLATE: {consensus_plate} ★★★", flush=True)
+                                    
+                                    # Save to database
+                                    if database_enabled and db:
+                                        try:
+                                            db.save_plate(
+                                                plate_number=consensus_plate,
+                                                confidence=confidence,
+                                                camera_id='webcam_0'
+                                            )
+                                        except Exception as e:
+                                            print(f"  ⚠ Failed to save to database: {e}")
                     else:
                         # Plate too short for fuzzy matching
                         most_common = Counter(recent_plate_window).most_common(1)
@@ -324,6 +366,97 @@ def reset_plate():
     last_printed_plate = ""
     print("=== PLATE DETECTION RESET ===", flush=True)
     return jsonify({'status': 'reset', 'message': 'Ready for new detection'})
+
+
+@app.route('/api/database/status')
+def database_status():
+    """Check if database is available"""
+    return jsonify({
+        'enabled': database_enabled,
+        'connected': db is not None and not db.conn.closed if db else False
+    })
+
+
+@app.route('/api/database/recent')
+def get_recent_detections():
+    """Get recent plate detections from database"""
+    if not database_enabled or not db:
+        return jsonify({'error': 'Database not available'}), 503
+    
+    limit = request.args.get('limit', default=50, type=int)
+    try:
+        plates = db.get_recent_plates(limit=limit)
+        # Convert datetime to string for JSON
+        for plate in plates:
+            plate['detected_at'] = plate['detected_at'].isoformat()
+        return jsonify({'plates': plates, 'count': len(plates)})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/database/today')
+def get_today_detections():
+    """Get all plates detected today"""
+    if not database_enabled or not db:
+        return jsonify({'error': 'Database not available'}), 503
+    
+    try:
+        plates = db.get_plates_today()
+        for plate in plates:
+            plate['detected_at'] = plate['detected_at'].isoformat()
+        return jsonify({'plates': plates, 'count': len(plates)})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/database/search/<plate_number>')
+def search_plate(plate_number):
+    """Search for specific plate number"""
+    if not database_enabled or not db:
+        return jsonify({'error': 'Database not available'}), 503
+    
+    try:
+        plates = db.search_plate(plate_number)
+        for plate in plates:
+            plate['detected_at'] = plate['detected_at'].isoformat()
+        return jsonify({'plates': plates, 'count': len(plates)})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/database/stats')
+def get_stats():
+    """Get database statistics"""
+    if not database_enabled or not db:
+        return jsonify({'error': 'Database not available'}), 503
+    
+    try:
+        stats = db.get_plate_stats()
+        # Convert datetime to string
+        if stats.get('last_detection'):
+            stats['last_detection'] = stats['last_detection'].isoformat()
+        if stats.get('first_detection'):
+            stats['first_detection'] = stats['first_detection'].isoformat()
+        return jsonify(stats)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/database/most-seen')
+def get_most_seen():
+    """Get most frequently seen plates"""
+    if not database_enabled or not db:
+        return jsonify({'error': 'Database not available'}), 503
+    
+    limit = request.args.get('limit', default=10, type=int)
+    try:
+        plates = db.get_most_seen_plates(limit=limit)
+        for plate in plates:
+            plate['last_seen'] = plate['last_seen'].isoformat()
+            plate['first_seen'] = plate['first_seen'].isoformat()
+        return jsonify({'plates': plates, 'count': len(plates)})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 
 if __name__ == '__main__':

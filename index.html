@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>YOLO Object Detection</title>
+    <title>License Plate Detection</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -16,12 +16,13 @@
         h1 {
             color: #333;
         }
-        img {
+        #video {
             max-width: 90%;
             max-height: 80vh;
             border: 2px solid #333;
             border-radius: 8px;
             margin: 20px 0;
+            background-color: #ddd;
         }
         button {
             padding: 10px 20px;
@@ -36,25 +37,139 @@
         button:hover {
             background-color: #45a049;
         }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
         #status {
             font-size: 18px;
             margin: 10px;
             font-weight: bold;
         }
+        .success {
+            color: green;
+        }
+        .error {
+            color: red;
+        }
+        .info {
+            color: blue;
+        }
+        #plateDisplay {
+            font-size: 24px;
+            font-weight: bold;
+            color: #4CAF50;
+            margin: 20px;
+            padding: 15px;
+            border: 3px solid #4CAF50;
+            border-radius: 8px;
+            background-color: white;
+            min-width: 200px;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
-    <h1>YOLO Object Detection - Webcam</h1>
-    <div id="status">Starting webcam...</div>
-    <img id="video" src="http://localhost:5000/api/video" alt="Webcam Stream" />
-    <button onclick="testConnection()">Test Backend Connection</button>
+    <h1>License Plate Detection - Webcam</h1>
+    <div id="status" class="info">Connecting to backend...</div>
+    <img id="video" alt="Webcam Stream" />
+    <div id="plateDisplay" style="display: none;">
+        <div>Detected Plate:</div>
+        <div id="plateText">-</div>
+    </div>
+    <div>
+        <button id="testBtn" onclick="testConnection()">Test Backend Connection</button>
+        <button id="resetBtn" onclick="resetDetection()" style="background-color: #ff9800;">Reset Detection</button>
+    </div>
     <p id="result"></p>
 
     <script>
+        const videoElement = document.getElementById('video');
+        const statusElement = document.getElementById('status');
+        const resultElement = document.getElementById('result');
+        const plateDisplay = document.getElementById('plateDisplay');
+        const plateText = document.getElementById('plateText');
+        const testBtn = document.getElementById('testBtn');
+
+        // Test backend connection on load
         async function testConnection() {
-            const response = await fetch('http://localhost:5000/api/hello');
-            const data = await response.json();
-            document.getElementById('result').innerText = data.message;
+            try {
+                testBtn.disabled = true;
+                resultElement.innerText = 'Testing...';
+                const response = await fetch('http://localhost:5000/api/hello');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                
+                const data = await response.json();
+                resultElement.innerText = `✓ ${data.message}`;
+                resultElement.style.color = 'green';
+                statusElement.innerText = 'Backend connected! Loading webcam...';
+                statusElement.className = 'success';
+                
+                // Start video stream
+                videoElement.src = 'http://localhost:5000/api/video';
+                videoElement.onerror = function() {
+                    statusElement.innerText = 'Error loading video stream';
+                    statusElement.className = 'error';
+                };
+                videoElement.onload = function() {
+                    statusElement.innerText = 'Webcam stream active';
+                    statusElement.className = 'success';
+                };
+                
+                // Poll for detected plates
+                startPlatePolling();
+                
+            } catch (error) {
+                resultElement.innerText = `✗ Connection failed: ${error.message}`;
+                resultElement.style.color = 'red';
+                statusElement.innerText = 'Cannot connect to backend. Is Flask running?';
+                statusElement.className = 'error';
+            } finally {
+                testBtn.disabled = false;
+            }
+        }
+
+        // Poll for detected license plates
+        function startPlatePolling() {
+            setInterval(async () => {
+                try {
+                    const response = await fetch('http://localhost:5000/api/plate');
+                    const data = await response.json();
+                    
+                    if (data.plate) {
+                        plateDisplay.style.display = 'block';
+                        plateText.innerText = data.plate;
+                    }
+                } catch (error) {
+                    console.error('Error polling plate:', error);
+                }
+            }, 1000); // Poll every second
+        }
+
+        // Auto-test connection on page load
+        window.onload = function() {
+            setTimeout(testConnection, 500);
+        };
+
+        // Reset detection function
+        async function resetDetection() {
+            try {
+                const response = await fetch('http://localhost:5000/api/reset', {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                
+                plateDisplay.style.display = 'none';
+                plateText.innerText = '-';
+                resultElement.innerText = '✓ ' + data.message;
+                resultElement.style.color = 'green';
+            } catch (error) {
+                resultElement.innerText = '✗ Reset failed: ' + error.message;
+                resultElement.style.color = 'red';
+            }
         }
     </script>
 </body>
