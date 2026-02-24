@@ -1,0 +1,294 @@
+import cv2
+import re
+import time
+import random
+from collections import Counter, deque
+
+import easyocr
+
+# Initialize EasyOCR reader
+reader = easyocr.Reader(['en'], gpu=False)
+
+print("Camera Detection System - Randomized Floor & Lot Assignment")
+print("Floors: 1-5 | Lots: 1-5")
+
+# Variables for random floor/lot assignment
+assigned_floor = None
+assigned_lot = None
+
+last_printed_plate = ""
+last_ocr_time = 0.0
+ocr_interval_seconds = 0.9
+blocked_words = {
+    "PERSON",
+    "CELLPHONE",
+    "CELL",
+    "PHONE",
+    "ALABAMA",
+    "ALASKA",
+    "ARIZONA",
+    "ARKANSAS",
+    "CALIFORNIA",
+    "COLORADO",
+    "CONNECTICUT",
+    "DELAWARE",
+    "FLORIDA",
+    "GEORGIA",
+    "HAWAII",
+    "IDAHO",
+    "ILLINOIS",
+    "INDIANA",
+    "IOWA",
+    "KANSAS",
+    "KENTUCKY",
+    "LOUISIANA",
+    "MAINE",
+    "MARYLAND",
+    "MASSACHUSETTS",
+    "MICHIGAN",
+    "MINNESOTA",
+    "MISSISSIPPI",
+    "MISSOURI",
+    "MONTANA",
+    "NEBRASKA",
+    "NEVADA",
+    "NEWHAMPSHIRE",
+    "NEWJERSEY",
+    "NEWMEXICO",
+    "NEWYORK",
+    "NORTHCAROLINA",
+    "NORTHDAKOTA",
+    "OHIO",
+    "OKLAHOMA",
+    "OREGON",
+    "PENNSYLVANIA",
+    "RHODEISLAND",
+    "SOUTHCAROLINA",
+    "SOUTHDAKOTA",
+    "TENNESSEE",
+    "TEXAS",
+    "UTAH",
+    "VERMONT",
+    "VIRGINIA",
+    "WASHINGTON",
+    "WESTVIRGINIA",
+    "WISCONSIN",
+    "WYOMING",
+    "AL",
+    "AK",
+    "AZ",
+    "AR",
+    "CA",
+    "CO",
+    "CT",
+    "DE",
+    "FL",
+    "GA",
+    "HI",
+    "ID",
+    "IL",
+    "IN",
+    "IA",
+    "KS",
+    "KY",
+    "LA",
+    "ME",
+    "MD",
+    "MA",
+    "MI",
+    "MN",
+    "MS",
+    "MO",
+    "MT",
+    "NE",
+    "NV",
+    "NH",
+    "NJ",
+    "NM",
+    "NY",
+    "NC",
+    "ND",
+    "OH",
+    "OK",
+    "OR",
+    "PA",
+    "RI",
+    "SC",
+    "SD",
+    "TN",
+    "TX",
+    "UT",
+    "VT",
+    "VA",
+    "WA",
+    "WV",
+    "WI",
+    "WY",
+}
+show_candidate_boxes = True
+show_debug_counts = True
+max_candidates_per_tick = 3
+min_confidence = 0.4
+window_seconds = 5.0
+cooldown_seconds = 10.0
+min_votes = 3
+window_start_time = 0.0
+window_detections = []
+final_plate = ""
+finalized_at = 0.0
+
+
+def find_plate_candidates(gray_frame):
+    # Edge-based plate candidate detection
+    blur = cv2.bilateralFilter(gray_frame, 11, 17, 17)
+    edges = cv2.Canny(blur, 20, 160)
+    contours, _ = cv2.findContours(edges, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+
+    candidates = []
+    for contour in contours:
+        x, y, w, h = cv2.boundingRect(contour)
+        if h == 0:
+            continue
+        aspect_ratio = w / float(h)
+        area = w * h
+        if area < 800 or area > 90000:
+            continue
+        if aspect_ratio < 1.6 or aspect_ratio > 7.0:
+            continue
+        if h < 14:
+            continue
+        candidates.append((x, y, w, h))
+
+    return candidates
+
+# Open webcam
+cap = cv2.VideoCapture(0)
+cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+
+print("Camera opened. Press 'q' to quit.")
+
+while True:
+    ret, frame = cap.read()
+    
+    if not ret:
+        print("Failed to read from camera")
+        break
+    
+    # Run OCR periodically to detect license plate text
+    current_time = time.time()
+    if current_time - last_ocr_time >= ocr_interval_seconds:
+        last_ocr_time = current_time
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        candidates = find_plate_candidates(gray)
+        if show_debug_counts:
+            print(f"OCR tick: {len(candidates)} candidate(s)", flush=True)
+
+        candidates = sorted(candidates, key=lambda c: c[2] * c[3], reverse=True)
+        candidates = candidates[:max_candidates_per_tick]
+
+        for x, y, w, h in candidates:
+            roi = gray[y:y + h, x:x + w]
+            ocr_results = reader.readtext(
+                roi,
+                allowlist='ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
+                text_threshold=0.3,
+                low_text=0.15,
+                detail=1,
+            )
+
+            for _, text, confidence in ocr_results:
+                cleaned = re.sub(r'[^A-Z0-9]', '', text.upper())
+                if cleaned in blocked_words:
+                    continue
+                if not re.fullmatch(r'[A-Z0-9]{4,8}', cleaned):
+                    continue
+                if confidence < min_confidence:
+                    continue
+                if window_start_time == 0.0:
+                    window_start_time = current_time
+                window_detections.append(cleaned)
+                cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+                cv2.putText(
+                    frame,
+                    cleaned,
+                    (x, max(0, y - 8)),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.7,
+                    (0, 255, 0),
+                    2,
+                )
+
+            if show_candidate_boxes:
+                cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 165, 0), 1)
+
+    if window_start_time and (current_time - window_start_time >= window_seconds):
+        if window_detections:
+            most_common = Counter(window_detections).most_common(1)
+            if most_common:
+                consensus_plate, hits = most_common[0]
+                cooldown_active = (
+                    consensus_plate == last_printed_plate
+                    and (current_time - finalized_at) < cooldown_seconds
+                )
+                if hits >= min_votes and not cooldown_active:
+                    last_printed_plate = consensus_plate
+                    final_plate = consensus_plate
+                    finalized_at = current_time
+                    
+                    # Randomly assign floor (1-5) and lot (1-5)
+                    assigned_floor = random.randint(1, 5)
+                    assigned_lot = random.randint(1, 5)
+                    
+                    timestamp = time.strftime("%H:%M:%S")
+                    print(
+                        f"[{timestamp}] License plate detected: {consensus_plate} | Floor {assigned_floor} | Lot {assigned_lot}",
+                        flush=True,
+                    )
+        window_start_time = 0.0
+        window_detections = []
+
+    if final_plate:
+        cv2.putText(
+            frame,
+            f"FINAL: {final_plate}",
+            (10, 30),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            1.0,
+            (0, 255, 0),
+            2,
+        )
+    
+    # Display floor and lot information
+    if assigned_floor is not None and assigned_lot is not None:
+        cv2.putText(
+            frame,
+            f"Floor {assigned_floor} | Lot {assigned_lot}",
+            (10, frame.shape[0] - 10),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.7,
+            (255, 255, 0),
+            2,
+        )
+    else:
+        cv2.putText(
+            frame,
+            "Waiting for vehicle detection...",
+            (10, frame.shape[0] - 10),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.7,
+            (255, 255, 0),
+            2,
+        )
+
+    # Display the frame
+    cv2.imshow('YOLO Object Detection', frame)
+    
+    # Press 'q' to quit
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
+
+# Release resources
+cap.release()
+cv2.destroyAllWindows()
+print("Camera closed.")

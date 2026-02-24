@@ -1,0 +1,725 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FindMySpot</title>
+
+  <style>
+    :root{
+      /* Brand */
+      --brand-950:#062b27;
+      --brand-900:#073733;
+      --brand-850:#0a433e;
+      --brand-800:#0d554e;
+      --brand-700:#0f6a61;
+
+      /* UI */
+      --bg1:#eef3f2;
+      --bg2:#d7e3df;
+      --card:#ffffff;
+      --text:#0b1b1a;
+      --muted:#6b7a78;
+      --line: rgba(12,31,29,.12);
+
+      --accent:#ffd84d;
+      --accent-2:#ffcc2f;
+
+      --shadow-lg: 0 18px 48px rgba(0,0,0,.16);
+      --shadow-md: 0 12px 26px rgba(0,0,0,.12);
+      --shadow-sm: 0 10px 18px rgba(0,0,0,.08);
+
+      --r-outer: 24px;
+      --r-card: 18px;
+      --r-field: 12px;
+
+      --ring: 0 0 0 4px rgba(255,216,77,.28);
+    }
+
+    *{ box-sizing:border-box; }
+    html, body { height:100%; }
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(1000px 520px at 18% 0%, rgba(255,216,77,.18), rgba(255,216,77,0) 55%),
+        radial-gradient(900px 520px at 82% 10%, rgba(15,106,97,.16), rgba(15,106,97,0) 62%),
+        linear-gradient(180deg, var(--bg1), var(--bg2));
+      display:flex;
+      justify-content:center;
+      padding: 26px 12px;
+    }
+
+    /* Phone shell (same vibe as screenshot) */
+    .phone{
+      width: 390px;
+      max-width: 96vw;
+      border: 10px solid #1e5e59;
+      border-radius: 22px;
+      overflow:hidden;
+      background: linear-gradient(#eaf1ef, #cfdad7);
+      box-shadow: var(--shadow-lg);
+      position:relative;
+    }
+
+    
+    /* Header (same layout, smoother) */
+    .header{
+      background: linear-gradient(180deg, var(--brand-950), var(--brand-800));
+      padding: 14px 16px 12px;
+      display:flex;
+      align-items:center;
+      gap:12px;
+      color:#fff;
+      box-shadow: 0 10px 18px rgba(0,0,0,.14);
+      position:relative;
+      z-index: 5;
+    }
+
+    .logoMark{
+      width:40px; height:40px;
+      border-radius: 14px;
+      background: rgba(255,255,255,.10);
+      border: 1px solid rgba(255,255,255,.16);
+      display:grid;
+      place-items:center;
+      position:relative;
+      overflow:hidden;
+    }
+    .logoMark:before{
+      content:"";
+      position:absolute;
+      inset:-22px;
+      background: radial-gradient(circle at 30% 30%, rgba(255,216,77,.9), rgba(255,216,77,0) 55%);
+      transform: rotate(10deg);
+    }
+    .logoMark span{
+      position:relative;
+      font-size:20px;
+      filter: drop-shadow(0 2px 3px rgba(0,0,0,.25));
+    }
+
+    .brand{
+      font-weight: 950;
+      letter-spacing: .2px;
+      font-size: 22px;
+      line-height: 1;
+      display:flex;
+      align-items:baseline;
+      gap:0;
+    }
+    .brand .spot{ color: #9fd6ce; }
+
+    /* Tabs exactly under header (same), but less blocky */
+    .tabs{
+      background: rgba(255,255,255,.92);
+      display:flex;
+      border-bottom: 1px solid rgba(12,31,29,.10);
+      backdrop-filter: blur(10px);
+    }
+    .tab{
+      flex:1;
+      padding: 13px 10px;
+      font-weight: 900;
+      font-size: 12px;
+      letter-spacing: .7px;
+      text-transform: uppercase;
+      border:none;
+      background:transparent;
+      cursor:pointer;
+      color: #1b2a29;
+      position:relative;
+      transition: color .15s ease;
+    }
+    .tab:hover{ color:#0b4a44; }
+    .tab.active{
+      color: #0c4a44;
+    }
+    .tab.active:after{
+      content:"";
+      position:absolute;
+      left:22px;
+      right:22px;
+      bottom:0;
+      height:3px;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      border-radius: 999px;
+      box-shadow: 0 6px 12px rgba(255,216,77,.25);
+    }
+
+    /* Screen content */
+    .screen{
+      padding: 18px 16px 12px;
+      min-height: 560px;
+    }
+    .hidden{ display:none !important; }
+
+    /* Titles (same structure) */
+    .titleRow{
+      display:flex;
+      align-items:flex-start;
+      gap:12px;
+      margin-top: 6px;
+    }
+    .carIcon{
+      width:36px;
+      height:36px;
+      border-radius: 14px;
+      background: rgba(15,106,97,.10);
+      border: 1px solid rgba(15,106,97,.12);
+      display:grid;
+      place-items:center;
+      font-size:18px;
+      box-shadow: var(--shadow-sm);
+      color: #0d5a52;
+    }
+    .h1{
+      margin:0;
+      font-size: 22px;
+      font-weight: 1000;
+      letter-spacing: .2px;
+    }
+    .sub{
+      margin: 6px 0 0;
+      font-size: 12.5px;
+      color: var(--muted);
+      line-height: 1.35;
+      max-width: 300px;
+    }
+
+    /* Form card (same placement as screenshot, but refined) */
+    .form{
+      margin-top: 16px;
+      background: rgba(255,255,255,.78);
+      border: 1px solid rgba(255,255,255,.75);
+      border-radius: var(--r-card);
+      padding: 16px;
+      backdrop-filter: blur(10px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .label{
+      display:block;
+      font-size: 12px;
+      font-weight: 950;
+      letter-spacing:.6px;
+      text-transform: uppercase;
+      color:#153c39;
+      margin: 12px 2px 8px;
+      text-align:center; /* like your mockup */
+    }
+
+    .input{
+      width:100%;
+      padding: 12px 12px;
+      border-radius: var(--r-field);
+      border: 1px solid rgba(12,31,29,.14);
+      background: rgba(255,255,255,.95);
+      font-size: 15px;
+      outline:none;
+      text-align:center;
+      font-weight: 800;
+      letter-spacing:.35px;
+      transition: box-shadow .15s ease, border-color .15s ease;
+    }
+    .input::placeholder{ color:#a1aca9; font-weight:700; }
+    .input:focus{
+      box-shadow: var(--ring);
+      border-color: rgba(255,216,77,.7);
+    }
+
+    /* Primary buttons (same big yellow buttons, just nicer) */
+    .btn{
+      margin-top: 16px;
+      width:100%;
+      padding: 13px 14px;
+      border-radius: 14px;
+      border: 1px solid rgba(0,0,0,.08);
+      background: linear-gradient(180deg, var(--accent), var(--accent-2));
+      font-weight: 1000;
+      letter-spacing: .8px;
+      text-transform: uppercase;
+      cursor:pointer;
+      box-shadow: 0 16px 20px rgba(255,216,77,.26);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+      transition: transform .12s ease, filter .18s ease;
+    }
+    .btn:hover{ transform: translateY(-1px); filter: brightness(1.02); }
+    .btn:active{ transform: translateY(0); filter: brightness(.98); }
+    .btn:disabled{ opacity:.65; cursor:not-allowed; transform:none; }
+
+    /* Footer line (same content area) */
+    .footerBar{
+      margin-top: 16px;
+      padding: 10px 12px;
+      border-top: 1px solid rgba(0,0,0,.08);
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      font-size: 11.5px;
+      color: #2a3b39;
+      opacity:.92;
+      flex-wrap:wrap;
+    }
+    .footerItem{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      white-space:nowrap;
+    }
+    .pillDot{
+      width:10px;height:10px;border-radius:999px;background:rgba(20,107,97,.25);
+    }
+    .badge{
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(15,106,97,.10);
+      border: 1px solid rgba(15,106,97,.14);
+      font-weight: 900;
+    }
+
+    /* Toast messages */
+    .toast{
+      margin-top: 12px;
+      font-size: 12.5px;
+      line-height: 1.35;
+      color: #2b3b39;
+      background: rgba(255,255,255,.72);
+      border: 1px solid rgba(12,31,29,.12);
+      border-radius: 14px;
+      padding: 12px 12px;
+      box-shadow: var(--shadow-sm);
+      white-space: pre-line;
+    }
+    .toast.ok{ border-color: rgba(18,128,96,.35); }
+    .toast.err{ border-color: rgba(214,69,69,.35); }
+
+    /* Loading screen */
+    .center{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      flex-direction:column;
+      gap:18px;
+      height: 560px;
+      padding: 0 16px;
+    }
+    .spinner{
+      width: 72px;
+      height: 72px;
+      border-radius: 999px;
+      border: 10px solid rgba(0,0,0,.08);
+      border-top-color: rgba(20,107,97,.88);
+      animation: spin 1s linear infinite;
+      box-shadow: var(--shadow-sm);
+    }
+    @keyframes spin{ to{ transform: rotate(360deg); } }
+    .loadingText{
+      font-size: 20px;
+      font-weight: 1000;
+      color: #174a45;
+      letter-spacing: .2px;
+    }
+    .loadingSub{
+      margin-top: -10px;
+      font-size: 12.5px;
+      color: var(--muted);
+    }
+
+    /* Result screen (same layout: banner -> floor -> spot -> details -> map -> button) */
+    .banner{
+      width:100%;
+      background: linear-gradient(180deg, var(--accent), var(--accent-2));
+      color:#0c3b37;
+      font-weight: 1000;
+      letter-spacing:.7px;
+      text-transform: uppercase;
+      border-radius: 14px;
+      padding: 12px 12px;
+      text-align:center;
+      border: 1px solid rgba(0,0,0,.08);
+      box-shadow: 0 16px 18px rgba(255,216,77,.22);
+    }
+
+    .bigStat{
+      text-align:center;
+      margin-top: 14px;
+    }
+    .bigStat .k{
+      font-weight: 1000;
+      letter-spacing: .9px;
+      text-transform: uppercase;
+      color:#1c2f2d;
+      font-size: 14px;
+      margin: 14px 0 6px;
+    }
+    .bigStat .v{
+      font-weight: 1100;
+      font-size: 52px;
+      color:#0d4b45;
+      margin:0;
+      line-height: 1;
+    }
+
+    .meta{
+      margin-top: 12px;
+      color: #4d5e5c;
+      font-size: 12.5px;
+      line-height: 1.4;
+      white-space: pre-line;
+      background: rgba(255,255,255,.55);
+      border: 1px solid rgba(12,31,29,.10);
+      border-radius: 14px;
+      padding: 12px 12px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .map{
+      margin-top: 12px;
+      border-radius: 16px;
+      border: 1px solid rgba(0,0,0,.08);
+      overflow:hidden;
+      background:#fff;
+      box-shadow: var(--shadow-md);
+    }
+
+    .directionsBtn{
+      margin-top: 12px;
+      width:100%;
+      padding: 13px 14px;
+      border-radius: 14px;
+      border: 1px solid rgba(0,0,0,.10);
+      background: linear-gradient(180deg, var(--brand-800), var(--brand-700));
+      color:#fff;
+      font-weight: 1000;
+      font-size: 15px;
+      letter-spacing: .4px;
+      cursor:pointer;
+      box-shadow: 0 16px 18px rgba(18,95,87,.22);
+      transition: transform .12s ease, filter .18s ease;
+    }
+    .directionsBtn:hover{ transform: translateY(-1px); filter: brightness(1.03); }
+    .directionsBtn:active{ transform: translateY(0); filter: brightness(.98); }
+  </style>
+</head>
+
+<body>
+  <div class="phone">
+    <div class="header">
+      <div class="logoMark" aria-hidden="true"><span>🚗</span></div>
+      <div class="brand">FindMy<span class="spot">Spot</span></div>
+    </div>
+
+    <div class="tabs">
+      <button id="tabFind" class="tab active" onclick="switchTab('find')">FIND MY VEHICLE</button>
+      <button id="tabCheck" class="tab" onclick="switchTab('checkin')">CHECK IN VEHICLE</button>
+    </div>
+
+    <!-- FIND SCREEN -->
+    <div id="viewFind" class="screen">
+      <div class="titleRow">
+        <div class="carIcon">🚘</div>
+        <div>
+          <p class="h1">LOCATE YOUR VEHICLE</p>
+          <p class="sub">Enter your license plate number to find your parking location.</p>
+        </div>
+      </div>
+
+      <div class="form">
+        <label class="label">LICENSE PLATE NUMBER</label>
+        <input id="findPlate" class="input" placeholder="ABCD123" autocomplete="off" />
+
+        <button id="btnFind" class="btn" onclick="findVehicle()">
+          🔍 <span>FIND VEHICLE</span>
+        </button>
+
+        <div id="findMsg" class="toast hidden"></div>
+
+        <div class="footerBar">
+          <div class="footerItem"><span class="pillDot"></span> Need Help? <strong>(123) 4567-1010</strong></div>
+          <div class="footerItem"><span class="badge">AI-Powered Security</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CHECK-IN SCREEN -->
+    <div id="viewCheckin" class="screen hidden">
+      <div class="titleRow">
+        <div class="carIcon">🚗</div>
+        <div>
+          <p class="h1">CHECK IN VEHICLE</p>
+          <p class="sub">In a real system, the camera will detect this automatically.</p>
+        </div>
+      </div>
+
+      <div class="form">
+        <label class="label">LICENSE PLATE NUMBER</label>
+        <input id="checkPlate" class="input" placeholder="ABCD123" autocomplete="off" />
+
+        <label class="label">FLOOR (1-5)</label>
+        <input id="checkFloor" class="input" type="number" min="1" max="5" placeholder="1" autocomplete="off" />
+
+        <label class="label">LOT (1-5)</label>
+        <input id="checkLot" class="input" type="number" min="1" max="5" placeholder="1" autocomplete="off" />
+
+        <button id="btnCheckin" class="btn" onclick="checkIn()">
+          ✓ <span>CHECK IN</span>
+        </button>
+
+        <div id="checkMsg" class="toast hidden"></div>
+
+        <div class="footerBar">
+          <div class="footerItem"><span class="pillDot"></span> Need Help? <strong>(123) 4567-1010</strong></div>
+          <div class="footerItem"><span class="badge">AI-Powered Security</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LOADING SCREEN -->
+    <div id="viewLoading" class="screen hidden">
+      <div class="center">
+        <div class="spinner" aria-label="Loading"></div>
+        <div class="loadingText">Loading...</div>
+        <div class="loadingSub">Contacting the server</div>
+      </div>
+    </div>
+
+    <!-- RESULT SCREEN -->
+    <div id="viewResult" class="screen hidden">
+      <div class="banner">Location Found!</div>
+
+      <div class="bigStat">
+        <div class="k">FLOOR</div>
+        <p id="resFloor" class="v">—</p>
+
+        <div class="k">LOT</div>
+        <p id="resLot" class="v">—</p>
+      </div>
+
+      <div id="resMeta" class="meta"></div>
+
+      <div class="map" aria-label="Map preview">
+        <svg viewBox="0 0 800 420" width="100%" height="240" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="g" x1="0" x2="1" y1="0" y2="1">
+              <stop offset="0" stop-color="#cfe8d8"/>
+              <stop offset="1" stop-color="#eaf2ef"/>
+            </linearGradient>
+          </defs>
+          <rect x="0" y="0" width="800" height="420" fill="url(#g)"/>
+          <g stroke="#8aa6a1" stroke-width="18" opacity="0.9" stroke-linecap="round">
+            <path d="M60 70 H740"/>
+            <path d="M120 160 H700"/>
+            <path d="M80 260 H740"/>
+            <path d="M180 350 H720"/>
+            <path d="M140 40 V390"/>
+            <path d="M300 30 V400"/>
+            <path d="M460 40 V390"/>
+            <path d="M620 30 V400"/>
+          </g>
+          <g opacity="0.85">
+            <rect x="165" y="95" width="110" height="55" rx="12" fill="#b8d7c6"/>
+            <rect x="325" y="95" width="110" height="55" rx="12" fill="#b8d7c6"/>
+            <rect x="485" y="95" width="110" height="55" rx="12" fill="#b8d7c6"/>
+            <rect x="645" y="95" width="70" height="55" rx="12" fill="#b8d7c6"/>
+
+            <rect x="165" y="190" width="110" height="55" rx="12" fill="#b8d7c6"/>
+            <rect x="325" y="190" width="110" height="55" rx="12" fill="#b8d7c6"/>
+            <rect x="485" y="190" width="110" height="55" rx="12" fill="#b8d7c6"/>
+            <rect x="645" y="190" width="70" height="55" rx="12" fill="#b8d7c6"/>
+
+            <rect x="165" y="290" width="110" height="55" rx="12" fill="#b8d7c6"/>
+            <rect x="325" y="290" width="110" height="55" rx="12" fill="#b8d7c6"/>
+            <rect x="485" y="290" width="110" height="55" rx="12" fill="#b8d7c6"/>
+            <rect x="645" y="290" width="70" height="55" rx="12" fill="#b8d7c6"/>
+          </g>
+
+          <g transform="translate(410,210)">
+            <circle cx="0" cy="-12" r="18" fill="#ff4d4d" stroke="#b51f1f" stroke-width="6"/>
+            <path d="M0 10 C-20 -10 -20 -40 0 -55 C20 -40 20 -10 0 10 Z"
+                  fill="#ff4d4d" opacity="0.95"/>
+            <circle cx="0" cy="-12" r="7" fill="#fff"/>
+          </g>
+
+          <text x="24" y="400" font-size="22" fill="#355a56" font-weight="800">
+            Map preview (placeholder)
+          </text>
+        </svg>
+      </div>
+
+      <button class="directionsBtn" onclick="getDirections()">Get Directions</button>
+      <div id="resultMsg" class="toast hidden"></div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE_URL = "http://localhost:3000";
+    function normalizePlate(p){
+      return (p || "").trim().toUpperCase().replace(/\s+/g, "");
+    }
+
+    function showOnly(viewId){
+      const views = ["viewFind","viewCheckin","viewLoading","viewResult"];
+      for(const v of views){
+        document.getElementById(v).classList.toggle("hidden", v !== viewId);
+      }
+    }
+
+    function switchTab(which){
+      document.getElementById("tabFind").classList.toggle("active", which === "find");
+      document.getElementById("tabCheck").classList.toggle("active", which === "checkin");
+      showOnly(which === "find" ? "viewFind" : "viewCheckin");
+      clearMessages();
+    }
+
+    function clearMessages(){
+      const ids = ["findMsg","checkMsg","resultMsg"];
+      for(const id of ids){
+        const el = document.getElementById(id);
+        el.classList.add("hidden");
+        el.classList.remove("ok","err");
+        el.textContent = "";
+      }
+    }
+
+    function setBusy(buttonId, busy){
+      const btn = document.getElementById(buttonId);
+      btn.disabled = !!busy;
+    }
+
+    function toast(el, text, type){
+      el.textContent = text;
+      el.classList.remove("hidden","ok","err");
+      if(type === "ok") el.classList.add("ok");
+      if(type === "err") el.classList.add("err");
+    }
+
+    async function safeJson(response){
+      const text = await response.text();
+      try{ return JSON.parse(text); }
+      catch{ return { message: text }; }
+    }
+
+    async function checkIn(){
+      clearMessages();
+
+      const plate = normalizePlate(document.getElementById("checkPlate").value);
+      const floorInput = document.getElementById("checkFloor").value;
+      const lotInput = document.getElementById("checkLot").value;
+      const msg = document.getElementById("checkMsg");
+
+      const floor = parseInt(floorInput);
+      const lot = parseInt(lotInput);
+
+      if(!plate || !floorInput || !lotInput){
+        toast(msg, "Please fill: plate, floor, and lot.", "err");
+        return;
+      }
+
+      if(floor < 1 || floor > 5 || lot < 1 || lot > 5){
+        toast(msg, "Floor and Lot must be between 1 and 5.", "err");
+        return;
+      }
+
+      setBusy("btnCheckin", true);
+
+      try{
+        const res = await fetch(`${API_BASE_URL}/api/parking/checkin`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ vehiclePlate: plate, floor, lot })
+        });
+
+        const data = await safeJson(res);
+
+        if(!res.ok){
+          toast(msg, data.message || "Check-in failed.", "err");
+          return;
+        }
+
+        toast(msg, data.message || `Checked in ${plate} successfully to Floor ${floor}, Lot ${lot}.`, "ok");
+        
+        // Clear inputs
+        document.getElementById("checkPlate").value = "";
+        document.getElementById("checkFloor").value = "";
+        document.getElementById("checkLot").value = "";
+      }catch(e){
+        toast(msg, "Backend not reachable. Make sure the server is running at http://localhost:3000", "err");
+      }finally{
+        setBusy("btnCheckin", false);
+      }
+    }
+
+    async function findVehicle(){
+      clearMessages();
+
+      const plate = normalizePlate(document.getElementById("findPlate").value);
+      const msg = document.getElementById("findMsg");
+
+      if(!plate){
+        toast(msg, "Please enter a license plate number.", "err");
+        return;
+      }
+
+      setBusy("btnFind", true);
+      showOnly("viewLoading");
+
+      try{
+        const res = await fetch(`${API_BASE_URL}/api/parking/vehicles/${encodeURIComponent(plate)}`);
+        const data = await safeJson(res);
+
+        if(!res.ok){
+          showOnly("viewFind");
+          toast(msg, data.message || "Vehicle not found.", "err");
+          return;
+        }
+
+        // Find active session
+        const activeSessions = data.data.sessions.filter(s => s.checkOutTime === null);
+        
+        if(activeSessions.length === 0){
+          showOnly("viewFind");
+          toast(msg, "Vehicle found but not currently parked.", "err");
+          return;
+        }
+
+        const session = activeSessions[0];
+        
+        document.getElementById("resFloor").textContent = session.floor ?? "—";
+        document.getElementById("resLot").textContent = session.lot ?? "—";
+
+        const parkedSince = session.checkInTime ? new Date(session.checkInTime).toLocaleString() : "Unknown";
+
+        document.getElementById("resMeta").innerText =
+          `License Plate: ${plate}\n` +
+          `Parked Since: ${parkedSince}\n` +
+          `Floor ${session.floor}, Lot ${session.lot}\n` +
+          `Follow the navigation to your vehicle.`;
+
+        showOnly("viewResult");
+      }catch(e){
+        showOnly("viewFind");
+        toast(msg, "Backend not reachable. Make sure the server is running at http://localhost:3000", "err");
+      }finally{
+        setBusy("btnFind", false);
+      }
+    }
+
+    function getDirections(){
+      const msg = document.getElementById("resultMsg");
+      const floor = document.getElementById("resFloor").textContent;
+      const lot = document.getElementById("resLot").textContent;
+      toast(msg, `Navigate to Floor ${floor}, Lot ${lot}. Turn-by-turn directions coming soon!`, "ok");
+    }
+
+    // Start
+    switchTab("find");
+  </script>
+</body>
+</html>

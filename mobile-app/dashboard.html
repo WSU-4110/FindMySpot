@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FindMySpot - Parking Dashboard</title>
+
+  <style>
+    :root {
+      --brand-950: #062b27;
+      --brand-900: #073733;
+      --brand-850: #0a433e;
+      --brand-800: #0d554e;
+      --brand-700: #0f6a61;
+      --bg1: #eef3f2;
+      --bg2: #d7e3df;
+      --card: #ffffff;
+      --text: #0b1b1a;
+      --muted: #6b7a78;
+      --line: rgba(12, 31, 29, .12);
+      --accent: #ffd84d;
+      --accent-2: #ffcc2f;
+      --shadow-lg: 0 18px 48px rgba(0, 0, 0, .16);
+      --shadow-md: 0 12px 26px rgba(0, 0, 0, .12);
+      --shadow-sm: 0 10px 18px rgba(0, 0, 0, .08);
+      --r-outer: 24px;
+      --r-card: 18px;
+      --r-field: 12px;
+      --occupied: #ff6b6b;
+      --available: #51cf66;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      height: 100%;
+    }
+
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(1000px 520px at 18% 0%, rgba(255, 216, 77, .18), rgba(255, 216, 77, 0) 55%),
+        radial-gradient(900px 520px at 82% 10%, rgba(15, 106, 97, .16), rgba(15, 106, 97, 0) 62%),
+        linear-gradient(180deg, var(--bg1), var(--bg2));
+      padding: 20px;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .header {
+      background: linear-gradient(180deg, var(--brand-950), var(--brand-800));
+      padding: 20px 30px;
+      border-radius: var(--r-card);
+      color: #fff;
+      margin-bottom: 30px;
+      box-shadow: var(--shadow-md);
+    }
+
+    .header h1 {
+      margin: 0 0 5px;
+      font-size: 32px;
+    }
+
+    .header p {
+      margin: 0;
+      opacity: 0.85;
+      font-size: 14px;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .stat-card {
+      background: var(--card);
+      padding: 20px;
+      border-radius: var(--r-card);
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--line);
+    }
+
+    .stat-card h3 {
+      margin: 0 0 10px;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--muted);
+    }
+
+    .stat-card .value {
+      font-size: 36px;
+      font-weight: 900;
+      color: var(--brand-900);
+      margin: 0;
+    }
+
+    .floors {
+      display: flex;
+      flex-direction: column;
+      gap: 25px;
+    }
+
+    .floor-card {
+      background: var(--card);
+      padding: 25px;
+      border-radius: var(--r-card);
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--line);
+    }
+
+    .floor-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 15px;
+      border-bottom: 2px solid var(--line);
+    }
+
+    .floor-header h2 {
+      margin: 0;
+      font-size: 24px;
+      color: var(--brand-900);
+    }
+
+    .floor-stats {
+      display: flex;
+      gap: 15px;
+      font-size: 14px;
+    }
+
+    .floor-stats span {
+      padding: 5px 12px;
+      border-radius: 999px;
+      font-weight: 700;
+    }
+
+    .floor-stats .occupied-stat {
+      background: rgba(255, 107, 107, 0.15);
+      color: #c92a2a;
+    }
+
+    .floor-stats .available-stat {
+      background: rgba(81, 207, 102, 0.15);
+      color: #2b8a3e;
+    }
+
+    .lots-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 15px;
+    }
+
+    .lot {
+      padding: 20px;
+      border-radius: var(--r-field);
+      border: 2px solid;
+      text-align: center;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .lot:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .lot.available {
+      background: rgba(81, 207, 102, 0.1);
+      border-color: var(--available);
+    }
+
+    .lot.occupied {
+      background: rgba(255, 107, 107, 0.1);
+      border-color: var(--occupied);
+    }
+
+    .lot-number {
+      font-size: 28px;
+      font-weight: 900;
+      margin: 0 0 8px;
+    }
+
+    .lot-status {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin: 0 0 5px;
+    }
+
+    .lot-vehicle {
+      font-size: 11px;
+      color: var(--muted);
+      margin: 0;
+      font-family: monospace;
+    }
+
+    .refresh-btn {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      padding: 15px 25px;
+      background: linear-gradient(180deg, var(--accent), var(--accent-2));
+      border: none;
+      border-radius: 999px;
+      font-weight: 900;
+      font-size: 14px;
+      cursor: pointer;
+      box-shadow: var(--shadow-md);
+      transition: transform 0.2s ease;
+    }
+
+    .refresh-btn:hover {
+      transform: translateY(-2px);
+    }
+
+    .refresh-btn:active {
+      transform: translateY(0);
+    }
+
+    .loading {
+      text-align: center;
+      padding: 50px;
+      font-size: 18px;
+      color: var(--muted);
+    }
+
+    .error {
+      background: rgba(255, 107, 107, 0.15);
+      color: #c92a2a;
+      padding: 20px;
+      border-radius: var(--r-card);
+      text-align: center;
+      margin: 20px 0;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🚗 FindMySpot Parking Dashboard</h1>
+      <p>Real-time parking occupancy across all floors and lots</p>
+    </div>
+
+    <div id="stats" class="stats"></div>
+    <div id="floors" class="floors"></div>
+    <div id="loading" class="loading">Loading parking data...</div>
+    <div id="error" class="error" style="display:none;"></div>
+
+    <button class="refresh-btn" onclick="loadData()">🔄 Refresh</button>
+  </div>
+
+  <script>
+    const API_BASE_URL = "http://localhost:3000";
+
+    async function loadData() {
+      try {
+        document.getElementById('loading').style.display = 'block';
+        document.getElementById('error').style.display = 'none';
+
+        // Load statistics
+        const statsRes = await fetch(`${API_BASE_URL}/api/parking/stats`);
+        const statsData = await statsRes.json();
+
+        // Load all spots
+        const spotsRes = await fetch(`${API_BASE_URL}/api/parking/spots`);
+        const spotsData = await spotsRes.json();
+
+        if (statsData.success && spotsData.success) {
+          renderStats(statsData.data);
+          renderFloors(spotsData.data);
+          document.getElementById('loading').style.display = 'none';
+        } else {
+          throw new Error('Failed to load data');
+        }
+      } catch (error) {
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('error').style.display = 'block';
+        document.getElementById('error').textContent = 
+          'Failed to connect to backend. Make sure the server is running at http://localhost:3000';
+      }
+    }
+
+    function renderStats(stats) {
+      const statsContainer = document.getElementById('stats');
+      statsContainer.innerHTML = `
+        <div class="stat-card">
+          <h3>Total Spots</h3>
+          <p class="value">${stats.total}</p>
+        </div>
+        <div class="stat-card">
+          <h3>Available</h3>
+          <p class="value" style="color: var(--available);">${stats.available}</p>
+        </div>
+        <div class="stat-card">
+          <h3>Occupied</h3>
+          <p class="value" style="color: var(--occupied);">${stats.occupied}</p>
+        </div>
+        <div class="stat-card">
+          <h3>Occupancy Rate</h3>
+          <p class="value">${Math.round((stats.occupied / stats.total) * 100)}%</p>
+        </div>
+      `;
+    }
+
+    function renderFloors(spots) {
+      const floorsContainer = document.getElementById('floors');
+      floorsContainer.innerHTML = '';
+
+      // Group spots by floor
+      const floors = {};
+      spots.forEach(spot => {
+        if (!floors[spot.floor]) {
+          floors[spot.floor] = [];
+        }
+        floors[spot.floor].push(spot);
+      });
+
+      // Render each floor
+      Object.keys(floors).sort((a, b) => a - b).forEach(floorNum => {
+        const floorSpots = floors[floorNum];
+        const occupied = floorSpots.filter(s => s.occupied).length;
+        const available = floorSpots.length - occupied;
+
+        const floorCard = document.createElement('div');
+        floorCard.className = 'floor-card';
+
+        floorCard.innerHTML = `
+          <div class="floor-header">
+            <h2>Floor ${floorNum}</h2>
+            <div class="floor-stats">
+              <span class="occupied-stat">🚗 ${occupied} Occupied</span>
+              <span class="available-stat">✓ ${available} Available</span>
+            </div>
+          </div>
+          <div class="lots-grid">
+            ${floorSpots.sort((a, b) => a.lot - b.lot).map(spot => `
+              <div class="lot ${spot.occupied ? 'occupied' : 'available'}">
+                <p class="lot-number">Lot ${spot.lot}</p>
+                <p class="lot-status">${spot.occupied ? '🚗 Occupied' : '✓ Available'}</p>
+                ${spot.vehicle ? `<p class="lot-vehicle">${spot.vehicle}</p>` : ''}
+              </div>
+            `).join('')}
+          </div>
+        `;
+
+        floorsContainer.appendChild(floorCard);
+      });
+    }
+
+    // Load data on page load
+    loadData();
+
+    // Auto-refresh every 10 seconds
+    setInterval(loadData, 10000);
+  </script>
+</body>
+</html>
