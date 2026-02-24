@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const parkingRoutes = require('./routes/parkingRoutes');
+const userRoutes = require('./routes/userRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -12,6 +13,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // Routes
 app.use('/api/parking', parkingRoutes);
+app.use('/api/auth', userRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {

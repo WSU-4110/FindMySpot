@@ -3,16 +3,18 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>FindMySpot – Sign Up</title>
+  <title>FindMySpot - Create Account</title>
 
   <style>
     :root{
+      /* Brand */
       --brand-950:#062b27;
       --brand-900:#073733;
       --brand-850:#0a433e;
       --brand-800:#0d554e;
       --brand-700:#0f6a61;
 
+      /* UI */
       --bg1:#eef3f2;
       --bg2:#d7e3df;
       --card:#ffffff;
@@ -27,6 +29,7 @@
       --shadow-md: 0 12px 26px rgba(0,0,0,.12);
       --shadow-sm: 0 10px 18px rgba(0,0,0,.08);
 
+      --r-outer: 24px;
       --r-card: 18px;
       --r-field: 12px;
 
@@ -48,6 +51,7 @@
       padding: 26px 12px;
     }
 
+    /* Phone shell */
     .phone{
       width: 390px;
       max-width: 96vw;
@@ -56,6 +60,7 @@
       overflow:hidden;
       background: linear-gradient(#eaf1ef, #cfdad7);
       box-shadow: var(--shadow-lg);
+      position:relative;
     }
 
     /* Header */
@@ -69,7 +74,11 @@
       box-shadow: 0 10px 18px rgba(0,0,0,.14);
       position:relative;
       z-index: 5;
+      justify-content:space-between;
     }
+
+    .headerLeft{ display:flex; align-items:center; gap:12px; }
+
     .logoMark{
       width:40px; height:40px;
       border-radius: 14px;
@@ -92,6 +101,7 @@
       font-size:20px;
       filter: drop-shadow(0 2px 3px rgba(0,0,0,.25));
     }
+
     .brand{
       font-weight: 950;
       letter-spacing: .2px;
@@ -99,84 +109,13 @@
       line-height: 1;
       display:flex;
       align-items:baseline;
+      gap:0;
     }
     .brand .spot{ color: #9fd6ce; }
 
-    /* Progress bar */
-    .progress-bar{
-      background: rgba(255,255,255,.92);
-      border-bottom: 1px solid rgba(12,31,29,.10);
-      padding: 12px 16px 10px;
-      backdrop-filter: blur(10px);
-    }
-    .progress-label{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      margin-bottom: 8px;
-      font-size: 11px;
-      font-weight: 900;
-      letter-spacing: .6px;
-      text-transform: uppercase;
-      color: #153c39;
-    }
-    .step-count{ color: var(--muted); font-weight: 700; }
-    .progress-track{
-      height: 5px;
-      background: rgba(12,31,29,.10);
-      border-radius: 999px;
-      overflow:hidden;
-    }
-    .progress-fill{
-      height: 100%;
-      background: linear-gradient(90deg, var(--accent), var(--accent-2));
-      border-radius: 999px;
-      transition: width .4s cubic-bezier(.4,0,.2,1);
-      box-shadow: 0 2px 8px rgba(255,216,77,.4);
-    }
-
-    /* Screen */
-    .screen{
-      padding: 18px 16px 20px;
-    }
-
-    .titleRow{
-      display:flex;
-      align-items:flex-start;
-      gap:12px;
-      margin-top: 6px;
-      margin-bottom: 16px;
-    }
-    .carIcon{
-      width:36px; height:36px;
-      border-radius: 14px;
-      background: rgba(15,106,97,.10);
-      border: 1px solid rgba(15,106,97,.12);
-      display:grid;
-      place-items:center;
-      font-size:18px;
-      box-shadow: var(--shadow-sm);
-      flex-shrink: 0;
-    }
-    .h1{
-      margin:0;
-      font-size: 22px;
-      font-weight: 1000;
-      letter-spacing: .2px;
-    }
-    .sub{
-      margin: 6px 0 0;
-      font-size: 12.5px;
-      color: var(--muted);
-      line-height: 1.35;
-    }
-
-    /* Step panels */
-    .step{ display:none; }
-    .step.active{ display:block; }
-
-    /* Form card */
+    /* Form cards */
     .form{
+      margin-top: 16px;
       background: rgba(255,255,255,.78);
       border: 1px solid rgba(255,255,255,.75);
       border-radius: var(--r-card);
@@ -195,11 +134,10 @@
       margin: 12px 2px 8px;
       text-align:center;
     }
-    .label:first-child{ margin-top: 0; }
 
     .input{
       width:100%;
-      padding: 12px 14px;
+      padding: 12px 12px;
       border-radius: var(--r-field);
       border: 1px solid rgba(12,31,29,.14);
       background: rgba(255,255,255,.95);
@@ -208,7 +146,6 @@
       text-align:center;
       font-weight: 800;
       letter-spacing:.35px;
-      color: var(--text);
       transition: box-shadow .15s ease, border-color .15s ease;
     }
     .input::placeholder{ color:#a1aca9; font-weight:700; }
@@ -216,107 +153,7 @@
       box-shadow: var(--ring);
       border-color: rgba(255,216,77,.7);
     }
-    .input.error{
-      border-color: rgba(214,69,69,.5);
-      box-shadow: 0 0 0 4px rgba(214,69,69,.12);
-    }
 
-    .pw-wrap{ position: relative; }
-    .pw-wrap .input{ padding-right: 42px; }
-    .pw-toggle{
-      position: absolute;
-      right: 13px;
-      top: 50%;
-      transform: translateY(-50%);
-      background: none;
-      border: none;
-      cursor: pointer;
-      font-size: 15px;
-      color: var(--muted);
-      padding: 0;
-      line-height: 1;
-    }
-
-    /* Password strength */
-    .strength-wrap{
-      margin-top: 8px;
-    }
-    .strength-track{
-      height: 4px;
-      background: rgba(12,31,29,.10);
-      border-radius: 999px;
-      overflow:hidden;
-      margin-bottom: 4px;
-    }
-    .strength-fill{
-      height:100%;
-      border-radius:999px;
-      transition: width .3s ease, background .3s ease;
-      width: 0%;
-    }
-    .strength-label{
-      font-size: 11px;
-      font-weight: 700;
-      color: var(--muted);
-      text-align: right;
-    }
-
-    /* Vehicle type selector */
-    .vehicle-grid{
-      display:grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-      margin-top: 0;
-    }
-    .vehicle-opt{
-      border: 1.5px solid rgba(12,31,29,.14);
-      border-radius: 12px;
-      padding: 12px 8px;
-      background: rgba(255,255,255,.90);
-      cursor:pointer;
-      text-align:center;
-      transition: border-color .15s, background .15s, transform .12s;
-      font-size: 11px;
-      font-weight: 900;
-      letter-spacing: .4px;
-      text-transform: uppercase;
-      color: var(--muted);
-    }
-    .vehicle-opt .v-icon{ font-size: 24px; display:block; margin-bottom: 5px; }
-    .vehicle-opt:hover{
-      border-color: rgba(255,216,77,.6);
-      background: rgba(255,244,200,.3);
-      transform: translateY(-1px);
-    }
-    .vehicle-opt.selected{
-      border-color: var(--accent);
-      background: rgba(255,244,200,.45);
-      color: var(--brand-800);
-      box-shadow: 0 0 0 3px rgba(255,216,77,.22);
-    }
-
-    /* Terms checkbox */
-    .terms-row{
-      display:flex;
-      align-items:flex-start;
-      gap:10px;
-      margin-top: 14px;
-      font-size: 12px;
-      color: var(--muted);
-      line-height: 1.4;
-    }
-    .terms-row input[type=checkbox]{
-      width: 16px;
-      height: 16px;
-      flex-shrink: 0;
-      margin-top: 1px;
-      accent-color: var(--brand-800);
-      cursor:pointer;
-    }
-    .terms-row a{ color: var(--brand-800); font-weight: 700; text-decoration:none; }
-    .terms-row a:hover{ text-decoration:underline; }
-
-    /* Buttons */
     .btn{
       margin-top: 16px;
       width:100%;
@@ -327,7 +164,6 @@
       font-weight: 1000;
       letter-spacing: .8px;
       text-transform: uppercase;
-      font-size: 14px;
       cursor:pointer;
       box-shadow: 0 16px 20px rgba(255,216,77,.26);
       display:flex;
@@ -335,73 +171,61 @@
       justify-content:center;
       gap:10px;
       transition: transform .12s ease, filter .18s ease;
-      color: var(--text);
     }
     .btn:hover{ transform: translateY(-1px); filter: brightness(1.02); }
     .btn:active{ transform: translateY(0); filter: brightness(.98); }
-    .btn:disabled{ opacity:.5; cursor:not-allowed; transform:none; }
+    .btn:disabled{ opacity:.65; cursor:not-allowed; transform:none; }
 
-    .btn-back{
-      margin-top: 10px;
+    .btnGhost{
+      margin-top: 12px;
       width:100%;
-      padding: 11px 14px;
-      border-radius: 12px;
-      border: 1px solid rgba(12,31,29,.14);
-      background: rgba(255,255,255,.80);
-      font-weight: 800;
-      font-size: 13px;
-      letter-spacing:.4px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      border: 1px solid rgba(12,31,29,.12);
+      background: rgba(255,255,255,.65);
+      font-weight: 1000;
+      letter-spacing: .7px;
       text-transform: uppercase;
       cursor:pointer;
-      color: var(--muted);
-      transition: background .15s, border-color .15s;
+      color:#0d4b45;
+      box-shadow: var(--shadow-sm);
+      transition: transform .12s ease, filter .18s ease;
+      text-decoration: none;
+      display: block;
+      text-align: center;
     }
-    .btn-back:hover{ background:#fff; border-color:rgba(12,31,29,.28); }
+    .btnGhost:hover{ transform: translateY(-1px); filter: brightness(1.02); }
+    .btnGhost:active{ transform: translateY(0); filter: brightness(.98); }
 
-    /* Divider */
-    .divider{
-      display:flex;
-      align-items:center;
-      gap:8px;
-      margin: 14px 0 12px;
-      font-size: 11.5px;
-      font-weight: 700;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: .5px;
+    .authTop{
+      text-align:center;
+      margin-top: 6px;
+      margin-bottom: 10px;
     }
-    .divider::before,.divider::after{
-      content:'';
-      flex:1;
+    .authTop .appName{
+      font-size: 28px;
+      font-weight: 1100;
+      letter-spacing:.2px;
+      margin: 6px 0 0;
+      color:#0d4b45;
+    }
+    .dividerLine{
       height:1px;
       background: rgba(12,31,29,.12);
+      margin: 14px 0;
     }
 
-    .btn-social{
-      width:100%;
-      padding: 11px 14px;
-      border-radius: 12px;
-      border: 1px solid rgba(12,31,29,.14);
-      background: rgba(255,255,255,.90);
-      font-size: 13.5px;
-      font-weight: 800;
-      color: var(--text);
-      cursor:pointer;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      gap:9px;
-      margin-bottom: 9px;
-      transition: background .15s, border-color .15s, transform .12s;
+    /* Footer line */
+    .footerNote{
+      margin-top: 18px;
+      text-align:center;
+      color: var(--muted);
+      font-size: 12.5px;
+      line-height: 1.35;
+      padding: 0 10px;
     }
-    .btn-social:hover{
-      background: #fff;
-      border-color: rgba(12,31,29,.28);
-      transform: translateY(-1px);
-    }
-    .btn-social:active{ transform: translateY(0); }
 
-    /* Toast */
+    /* Toast messages */
     .toast{
       margin-top: 12px;
       font-size: 12.5px;
@@ -410,416 +234,132 @@
       background: rgba(255,255,255,.72);
       border: 1px solid rgba(12,31,29,.12);
       border-radius: 14px;
-      padding: 12px;
+      padding: 12px 12px;
       box-shadow: var(--shadow-sm);
-    }
-    .toast.err{ border-color: rgba(214,69,69,.35); color:#7a1a1a; }
-    .toast.ok{ border-color: rgba(18,128,96,.35); color:#0d4b3a; }
-    .hidden{ display:none !important; }
-
-    /* Footer */
-    .footerBar{
-      margin-top: 16px;
-      padding: 10px 12px;
-      border-top: 1px solid rgba(0,0,0,.08);
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:10px;
-      font-size: 11.5px;
-      color: #2a3b39;
-      opacity:.92;
-      flex-wrap:wrap;
-    }
-    .footerItem{
-      display:flex;
-      align-items:center;
-      gap:8px;
-      white-space:nowrap;
-    }
-    .pillDot{ width:10px;height:10px;border-radius:999px;background:rgba(20,107,97,.25); }
-    .badge{
-      padding: 6px 10px;
-      border-radius: 999px;
-      background: rgba(15,106,97,.10);
-      border: 1px solid rgba(15,106,97,.14);
-      font-weight: 900;
-    }
-
-    .login-row{
+      white-space: pre-line;
       text-align:center;
-      margin-top: 14px;
-      font-size: 12.5px;
-      color: var(--muted);
     }
-    .login-row a{
-      color: var(--brand-800);
-      font-weight: 900;
-      text-decoration: none;
-    }
-    .login-row a:hover{ text-decoration: underline; }
+    .toast.ok{ border-color: rgba(18,128,96,.35); }
+    .toast.err{ border-color: rgba(214,69,69,.35); }
 
-    /* Success screen */
-    .success-wrap{
-      text-align:center;
-      padding: 32px 16px 20px;
-    }
-    .success-icon{
-      width: 72px; height: 72px;
-      border-radius: 999px;
-      background: linear-gradient(135deg, var(--accent), var(--accent-2));
-      display:grid;
-      place-items:center;
-      font-size: 32px;
-      margin: 0 auto 20px;
-      box-shadow: 0 16px 28px rgba(255,216,77,.3);
-    }
-    .success-title{
-      font-size: 24px;
-      font-weight: 1000;
-      color: var(--brand-800);
-      margin-bottom: 8px;
-    }
-    .success-sub{
-      font-size: 13px;
-      color: var(--muted);
-      line-height: 1.5;
-      margin-bottom: 24px;
+    .screen{
+      padding: 18px 16px 12px;
+      min-height: 560px;
     }
   </style>
 </head>
 
 <body>
   <div class="phone">
-
-    <!-- Header -->
     <div class="header">
-      <div class="logoMark" aria-hidden="true"><span>🚗</span></div>
-      <div class="brand">FindMy<span class="spot">Spot</span></div>
-    </div>
-
-    <!-- Progress bar -->
-    <div class="progress-bar" id="progressBar">
-      <div class="progress-label">
-        <span id="stepLabel">Account Info</span>
-        <span class="step-count" id="stepCount">Step 1 of 3</span>
-      </div>
-      <div class="progress-track">
-        <div class="progress-fill" id="progressFill" style="width:33%"></div>
+      <div class="headerLeft">
+        <div class="logoMark" aria-hidden="true"><span>🚗</span></div>
+        <div class="brand">FindMy<span class="spot">Spot</span></div>
       </div>
     </div>
 
+    <!-- SIGNUP SCREEN-->
     <div class="screen">
-
-      <!-- ── STEP 1: Account Info ── -->
-      <div class="step active" id="step1">
-        <div class="titleRow">
-          <div class="carIcon">👤</div>
-          <div>
-            <p class="h1">CREATE ACCOUNT</p>
-            <p class="sub">Enter your details to get started with FindMySpot.</p>
-          </div>
-        </div>
-
-        <div class="form">
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-            <div>
-              <label class="label" style="text-align:left">First Name</label>
-              <input class="input" id="firstName" type="text" placeholder="John" autocomplete="off" />
-            </div>
-            <div>
-              <label class="label" style="text-align:left">Last Name</label>
-              <input class="input" id="lastName" type="text" placeholder="Doe" autocomplete="off" />
-            </div>
-          </div>
-
-          <label class="label">Email Address</label>
-          <input class="input" id="email" type="email" placeholder="you@example.com" autocomplete="off" />
-
-          
-          <button class="btn" onclick="goStep(2)">CONTINUE →</button>
-
-          <div id="msg1" class="toast hidden"></div>
-
-
-          
-          
-
-          <div class="login-row">Already have an account? <a href="#">Sign in</a></div>
-
-          <div class="footerBar">
-            <div class="footerItem"><span class="pillDot"></span> Need Help? <strong>(123) 4567-1010</strong></div>
-            <div class="footerItem"><span class="badge">AI-Powered Security</span></div>
-          </div>
-        </div>
+      <div class="authTop">
+        <div style="font-size:54px; filter: drop-shadow(0 10px 18px rgba(0,0,0,.10));"></div>
+        <div class="appName">Create Account</div>
       </div>
 
-      <!-- ── STEP 2: Password & Vehicle ── -->
-      <div class="step" id="step2">
-        <div class="titleRow">
-          <div class="carIcon">🔑</div>
-          <div>
-            <p class="h1">SECURE YOUR ACCOUNT</p>
-            <p class="sub">Create a password and tell us about your vehicle.</p>
-          </div>
-        </div>
-
-        <div class="form">
-          <label class="label">Password</label>
-          <div class="pw-wrap">
-            <input class="input" id="password" type="password" placeholder="Min. 8 characters" autocomplete="new-password" oninput="checkStrength(this.value)" />
-            <button class="pw-toggle" onclick="togglePw('password')" title="Show/hide">👁</button>
-          </div>
-          <div class="strength-wrap">
-            <div class="strength-track"><div class="strength-fill" id="strengthFill"></div></div>
-            <div class="strength-label" id="strengthLabel">—</div>
-          </div>
-
-          <label class="label">Confirm Password</label>
-          <div class="pw-wrap">
-            <input class="input" id="confirmPw" type="password" placeholder="Repeat password" autocomplete="new-password" />
-            <button class="pw-toggle" onclick="togglePw('confirmPw')" title="Show/hide">👁</button>
-          </div>
-
-          <label class="label" style="margin-top:18px">Vehicle Type</label>
-          <div class="vehicle-grid">
-            <div class="vehicle-opt" onclick="selectVehicle(this,'Sedan')">
-              <span class="v-icon">🚗</span>Sedan
-            </div>
-            <div class="vehicle-opt" onclick="selectVehicle(this,'SUV')">
-              <span class="v-icon">🚙</span>SUV / Truck
-            </div>
-            <div class="vehicle-opt" onclick="selectVehicle(this,'Motorcycle')">
-              <span class="v-icon">🏍️</span>Motorcycle
-            </div>
-            <div class="vehicle-opt" onclick="selectVehicle(this,'Electric')">
-              <span class="v-icon">⚡</span>Electric
-            </div>
-          </div>
-
-          <button class="btn" onclick="goStep(3)">CONTINUE →</button>
-          <button class="btn-back" onclick="goStep(1)">← BACK</button>
-
-          <div id="msg2" class="toast hidden"></div>
-
-          <div class="footerBar">
-            <div class="footerItem"><span class="pillDot"></span> Need Help? <strong>(123) 4567-1010</strong></div>
-            <div class="footerItem"><span class="badge">AI-Powered Security</span></div>
-          </div>
-        </div>
+      <div class="form">
+        <label class="label">Full Name</label>
+        <input id="suName" class="input" placeholder="Your name" type="text" />
+        <label class="label">Email</label>
+        <input id="suEmail" class="input" placeholder="you@example.com" type="email" />
+        <label class="label">Password</label>
+        <input id="suPass" class="input" placeholder="At least 6 characters" type="password" />
+        <label class="label">Confirm Password</label>
+        <input id="suPass2" class="input" placeholder="Confirm password" type="password" />
+        <button id="btnSignup" class="btn" onclick="doSignup()">Create Account</button>
+        <a href="login.html" class="btnGhost">Back to Sign In</a>
+        <div id="signupMsg" class="toast hidden"></div>
       </div>
 
-      <!-- ── STEP 3: License Plate & Terms ── -->
-      <div class="step" id="step3">
-        <div class="titleRow">
-          <div class="carIcon">🚘</div>
-          <div>
-            <p class="h1">ALMOST DONE</p>
-            <p class="sub">Add your license plate and agree to our terms.</p>
-          </div>
-        </div>
-
-        <div class="form">
-          <label class="label">License Plate Number</label>
-          <input class="input" id="plate" type="text" placeholder="ABCD123" autocomplete="off" style="text-transform:uppercase" />
-
-          <label class="label" style="margin-top:16px">Preferred Notification</label>
-          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
-            <div class="vehicle-opt" onclick="selectNotif(this,'SMS')" style="padding:10px 6px">
-              <span class="v-icon" style="font-size:20px">💬</span>SMS
-            </div>
-            <div class="vehicle-opt" onclick="selectNotif(this,'Email')" style="padding:10px 6px">
-              <span class="v-icon" style="font-size:20px">📧</span>Email
-            </div>
-            <div class="vehicle-opt" onclick="selectNotif(this,'Push')" style="padding:10px 6px">
-              <span class="v-icon" style="font-size:20px">🔔</span>Push
-            </div>
-          </div>
-
-          <div class="terms-row">
-            <input type="checkbox" id="terms" />
-            <label for="terms">I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a></label>
-          </div>
-
-          <button class="btn" onclick="handleSignup()">🚀 CREATE ACCOUNT</button>
-          <button class="btn-back" onclick="goStep(2)">← BACK</button>
-
-          <div id="msg3" class="toast hidden"></div>
-
-          <div class="footerBar">
-            <div class="footerItem"><span class="pillDot"></span> Need Help? <strong>(123) 4567-1010</strong></div>
-            <div class="footerItem"><span class="badge">AI-Powered Security</span></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ── STEP 4: Success ── -->
-      <div class="step" id="step4">
-        <div class="success-wrap">
-          <div class="success-icon">🎉</div>
-          <div class="success-title">You're All Set!</div>
-          <p class="success-sub">Your FindMySpot account has been created.<br>Start finding and checking in your vehicle.</p>
-
-          <div class="form" style="text-align:left">
-            <label class="label">Account Summary</label>
-            <div style="font-size:13px;font-weight:700;color:var(--muted);line-height:1.9">
-              <div>👤 <span id="summaryName" style="color:var(--text)">—</span></div>
-              <div>📧 <span id="summaryEmail" style="color:var(--text)">—</span></div>
-              <div>🚗 <span id="summaryVehicle" style="color:var(--text)">—</span></div>
-              <div>🔖 <span id="summaryPlate" style="color:var(--text)">—</span></div>
-            </div>
-
-            <button class="btn" style="margin-top:20px" onclick="goToApp()">
-              🚘 GO TO APP
-            </button>
-
-            <div class="footerBar">
-              <div class="footerItem"><span class="pillDot"></span> Need Help? <strong>(123) 4567-1010</strong></div>
-              <div class="footerItem"><span class="badge">AI-Powered Security</span></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-    </div><!-- /screen -->
-  </div><!-- /phone -->
+      <div class="footerNote">We don't share your information.</div>
+    </div>
+  </div>
 
   <script>
-    let currentStep = 1;
-    let selectedVehicle = '';
-    let selectedNotif = '';
+    const API_BASE_URL = "http://localhost:3000";
 
-    const stepMeta = [
-      null,
-      { label:'Account Info',   pct:'33%'  },
-      { label:'Security',       pct:'66%'  },
-      { label:'Final Details',  pct:'100%' },
-      { label:'Done!',          pct:'100%' },
-    ];
-
-    function goStep(n){
-      // Validate before advancing
-      if(n > currentStep){
-        if(!validate(currentStep)) return;
-      }
-
-      document.getElementById('step' + currentStep).classList.remove('active');
-      currentStep = n;
-      document.getElementById('step' + currentStep).classList.add('active');
-
-      const meta = stepMeta[currentStep];
-      if(currentStep === 4){
-        document.getElementById('progressBar').classList.add('hidden');
-      } else {
-        document.getElementById('progressBar').classList.remove('hidden');
-        document.getElementById('stepLabel').textContent  = meta.label;
-        document.getElementById('stepCount').textContent  = `Step ${currentStep} of 3`;
-        document.getElementById('progressFill').style.width = meta.pct;
-      }
+    function currentUser(){ return localStorage.getItem("fms_currentUser") || ""; }
+    function setCurrentUser(token){ 
+      if(token) localStorage.setItem("fms_currentUser", token);
+      else localStorage.removeItem("fms_currentUser");
     }
+    function getUserName(){ return localStorage.getItem("fms_userName") || ""; }
+    function setUserName(name){ localStorage.setItem("fms_userName", name); }
 
-    function validate(step){
-      clearToasts();
-      if(step === 1){
-        const fn    = document.getElementById('firstName').value.trim();
-        const ln    = document.getElementById('lastName').value.trim();
-        const email = document.getElementById('email').value.trim();
-        const phone = document.getElementById('phone').value.trim();
-        if(!fn || !ln){ showToast('msg1','Please enter your first and last name.','err'); return false; }
-        if(!email || !/\S+@\S+\.\S+/.test(email)){ showToast('msg1','Please enter a valid email address.','err'); return false; }
-        if(!phone){ showToast('msg1','Please enter your phone number.','err'); return false; }
-        return true;
-      }
-      if(step === 2){
-        const pw  = document.getElementById('password').value;
-        const cpw = document.getElementById('confirmPw').value;
-        if(pw.length < 8){ showToast('msg2','Password must be at least 8 characters.','err'); return false; }
-        if(pw !== cpw){ showToast('msg2','Passwords do not match.','err'); return false; }
-        if(!selectedVehicle){ showToast('msg2','Please select a vehicle type.','err'); return false; }
-        return true;
-      }
-      return true;
-    }
-
-    function clearToasts(){
-      ['msg1','msg2','msg3'].forEach(id => {
-        const el = document.getElementById(id);
-        el.textContent = '';
-        el.className = 'toast hidden';
-      });
-    }
-
-    function showToast(id, text, type){
-      const el = document.getElementById(id);
+    function toast(elId, text, type){
+      const el = document.getElementById(elId);
       el.textContent = text;
-      el.className = 'toast ' + (type || '');
+      el.classList.remove("hidden","ok","err");
+      if(type === "ok") el.classList.add("ok");
+      if(type === "err") el.classList.add("err");
     }
 
-    function togglePw(id){
-      const el = document.getElementById(id);
-      el.type = el.type === 'password' ? 'text' : 'password';
+    async function doSignup(){
+      const signupMsg = document.getElementById("signupMsg");
+      signupMsg.classList.add("hidden");
+      
+      const name = (document.getElementById("suName").value || "").trim();
+      const email = (document.getElementById("suEmail").value || "").trim().toLowerCase();
+      const pw1 = document.getElementById("suPass").value || "";
+      const pw2 = document.getElementById("suPass2").value || "";
+      
+      if(!name || !email || !pw1 || !pw2){
+        toast("signupMsg", "Please fill in all fields.", "err");
+        return;
+      }
+      if(pw1.length < 6){
+        toast("signupMsg", "Password must be at least 6 characters.", "err");
+        return;
+      }
+      if(pw1 !== pw2){
+        toast("signupMsg", "Passwords do not match.", "err");
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            name: name,
+            email: email,
+            password: pw1
+          })
+        });
+
+        const data = await response.json();
+
+        if(!response.ok){
+          toast("signupMsg", data.message || "Registration failed", "err");
+          return;
+        }
+
+        setCurrentUser(data.data.token);
+        setUserName(data.data.name);
+        toast("signupMsg", "Account created! Signing you in...", "ok");
+        
+        setTimeout(() => {
+          window.location.href = "index.html";
+        }, 800);
+      } catch(error) {
+        console.error("Signup error:", error);
+        toast("signupMsg", "Connection error. Make sure backend is running.", "err");
+      }
     }
 
-    function checkStrength(val){
-      const fill  = document.getElementById('strengthFill');
-      const label = document.getElementById('strengthLabel');
-      if(!val){ fill.style.width='0%'; label.textContent='—'; return; }
-      let score = 0;
-      if(val.length >= 8)  score++;
-      if(/[A-Z]/.test(val)) score++;
-      if(/[0-9]/.test(val)) score++;
-      if(/[^A-Za-z0-9]/.test(val)) score++;
-      const levels = [
-        { w:'20%', c:'#e05252', t:'Weak'   },
-        { w:'45%', c:'#e08c30', t:'Fair'   },
-        { w:'70%', c:'#d4c320', t:'Good'   },
-        { w:'100%',c:'#2db37a', t:'Strong' },
-      ];
-      const l = levels[Math.max(0, score-1)];
-      fill.style.width      = l.w;
-      fill.style.background = l.c;
-      label.textContent     = l.t;
-      label.style.color     = l.c;
-    }
-
-    function selectVehicle(el, type){
-      document.querySelectorAll('.vehicle-grid .vehicle-opt').forEach(o => o.classList.remove('selected'));
-      el.classList.add('selected');
-      selectedVehicle = type;
-    }
-
-    function selectNotif(el, type){
-      el.closest('.form').querySelectorAll('.vehicle-opt').forEach(o => o.classList.remove('selected'));
-      el.classList.add('selected');
-      selectedNotif = type;
-    }
-
-    function handleSignup(){
-      clearToasts();
-      const plate = document.getElementById('plate').value.trim().toUpperCase();
-      const terms = document.getElementById('terms').checked;
-      if(!plate){ showToast('msg3','Please enter your license plate number.','err'); return; }
-      if(!terms){ showToast('msg3','Please accept the Terms of Service to continue.','err'); return; }
-
-      // Populate summary
-      const fn    = document.getElementById('firstName').value.trim();
-      const ln    = document.getElementById('lastName').value.trim();
-      const email = document.getElementById('email').value.trim();
-      document.getElementById('summaryName').textContent    = `${fn} ${ln}`;
-      document.getElementById('summaryEmail').textContent   = email;
-      document.getElementById('summaryVehicle').textContent = selectedVehicle || 'Not specified';
-      document.getElementById('summaryPlate').textContent   = plate;
-
-      goStep(4);
-    }
-
-    function socialSignup(provider){
-      showToast('msg1', `Redirecting to ${provider}…`, '');
-    }
-
-    function goToApp(){
-      // Replace with actual navigation
-      alert('Navigating to the main app!');
+    // Check if user is already logged in
+    if(currentUser()){
+      window.location.href = "index.html";
     }
   </script>
 </body>

@@ -2,6 +2,7 @@ import cv2
 import re
 import time
 import random
+import requests
 from collections import Counter, deque
 
 import easyocr
@@ -11,6 +12,9 @@ reader = easyocr.Reader(['en'], gpu=False)
 
 print("Camera Detection System - Randomized Floor & Lot Assignment")
 print("Floors: 1-5 | Lots: 1-5")
+
+# Backend API configuration
+BACKEND_API_URL = "http://localhost:3000/api/parking/checkin"
 
 # Variables for random floor/lot assignment
 assigned_floor = None
@@ -138,6 +142,23 @@ final_plate = ""
 finalized_at = 0.0
 
 
+def send_parking_checkin(plate, floor, lot):
+    """Send parking check-in data to backend API"""
+    try:
+        payload = {
+            "vehiclePlate": plate,
+            "floor": floor,
+            "lot": lot
+        }
+        response = requests.post(BACKEND_API_URL, json=payload, timeout=5)
+        if response.status_code == 200:
+            print(f"✓ Sent to backend: {plate} -> Floor {floor}, Lot {lot}", flush=True)
+        else:
+            print(f"✗ Backend error: {response.status_code}", flush=True)
+    except Exception as e:
+        print(f"✗ Failed to send to backend: {str(e)}", flush=True)
+
+
 def find_plate_candidates(gray_frame):
     # Edge-based plate candidate detection
     blur = cv2.bilateralFilter(gray_frame, 11, 17, 17)
@@ -245,6 +266,9 @@ while True:
                         f"[{timestamp}] License plate detected: {consensus_plate} | Floor {assigned_floor} | Lot {assigned_lot}",
                         flush=True,
                     )
+                    
+                    # Send parking check-in to backend API
+                    send_parking_checkin(consensus_plate, assigned_floor, assigned_lot)
         window_start_time = 0.0
         window_detections = []
 
