@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FindMySpot - Sign In</title>
+
+  <style>
+    :root{
+      /* Brand */
+      --brand-950:#062b27;
+      --brand-900:#073733;
+      --brand-850:#0a433e;
+      --brand-800:#0d554e;
+      --brand-700:#0f6a61;
+
+      /* UI */
+      --bg1:#eef3f2;
+      --bg2:#d7e3df;
+      --card:#ffffff;
+      --text:#0b1b1a;
+      --muted:#6b7a78;
+      --line: rgba(12,31,29,.12);
+
+      --accent:#ffd84d;
+      --accent-2:#ffcc2f;
+
+      --shadow-lg: 0 18px 48px rgba(0,0,0,.16);
+      --shadow-md: 0 12px 26px rgba(0,0,0,.12);
+      --shadow-sm: 0 10px 18px rgba(0,0,0,.08);
+
+      --r-outer: 24px;
+      --r-card: 18px;
+      --r-field: 12px;
+
+      --ring: 0 0 0 4px rgba(255,216,77,.28);
+    }
+
+    *{ box-sizing:border-box; }
+    html, body { height:100%; }
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(1000px 520px at 18% 0%, rgba(255,216,77,.18), rgba(255,216,77,0) 55%),
+        radial-gradient(900px 520px at 82% 10%, rgba(15,106,97,.16), rgba(15,106,97,0) 62%),
+        linear-gradient(180deg, var(--bg1), var(--bg2));
+      display:flex;
+      justify-content:center;
+      padding: 26px 12px;
+    }
+
+    /* Phone shell */
+    .phone{
+      width: 390px;
+      max-width: 96vw;
+      border: 10px solid #1e5e59;
+      border-radius: 22px;
+      overflow:hidden;
+      background: linear-gradient(#eaf1ef, #cfdad7);
+      box-shadow: var(--shadow-lg);
+      position:relative;
+    }
+
+    /* Header */
+    .header{
+      background: linear-gradient(180deg, var(--brand-950), var(--brand-800));
+      padding: 14px 16px 12px;
+      display:flex;
+      align-items:center;
+      gap:12px;
+      color:#fff;
+      box-shadow: 0 10px 18px rgba(0,0,0,.14);
+      position:relative;
+      z-index: 5;
+      justify-content:space-between;
+    }
+
+    .headerLeft{ display:flex; align-items:center; gap:12px; }
+
+    .logoMark{
+      width:40px; height:40px;
+      border-radius: 14px;
+      background: rgba(255,255,255,.10);
+      border: 1px solid rgba(255,255,255,.16);
+      display:grid;
+      place-items:center;
+      position:relative;
+      overflow:hidden;
+    }
+    .logoMark:before{
+      content:"";
+      position:absolute;
+      inset:-22px;
+      background: radial-gradient(circle at 30% 30%, rgba(255,216,77,.9), rgba(255,216,77,0) 55%);
+      transform: rotate(10deg);
+    }
+    .logoMark span{
+      position:relative;
+      font-size:20px;
+      filter: drop-shadow(0 2px 3px rgba(0,0,0,.25));
+    }
+
+    .brand{
+      font-weight: 950;
+      letter-spacing: .2px;
+      font-size: 22px;
+      line-height: 1;
+      display:flex;
+      align-items:baseline;
+      gap:0;
+    }
+    .brand .spot{ color: #9fd6ce; }
+
+    /* Form cards */
+    .form{
+      margin-top: 16px;
+      background: rgba(255,255,255,.78);
+      border: 1px solid rgba(255,255,255,.75);
+      border-radius: var(--r-card);
+      padding: 16px;
+      backdrop-filter: blur(10px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .label{
+      display:block;
+      font-size: 12px;
+      font-weight: 950;
+      letter-spacing:.6px;
+      text-transform: uppercase;
+      color:#153c39;
+      margin: 12px 2px 8px;
+      text-align:center;
+    }
+
+    .input{
+      width:100%;
+      padding: 12px 12px;
+      border-radius: var(--r-field);
+      border: 1px solid rgba(12,31,29,.14);
+      background: rgba(255,255,255,.95);
+      font-size: 15px;
+      outline:none;
+      text-align:center;
+      font-weight: 800;
+      letter-spacing:.35px;
+      transition: box-shadow .15s ease, border-color .15s ease;
+    }
+    .input::placeholder{ color:#a1aca9; font-weight:700; }
+    .input:focus{
+      box-shadow: var(--ring);
+      border-color: rgba(255,216,77,.7);
+    }
+
+    .btn{
+      margin-top: 16px;
+      width:100%;
+      padding: 13px 14px;
+      border-radius: 14px;
+      border: 1px solid rgba(0,0,0,.08);
+      background: linear-gradient(180deg, var(--accent), var(--accent-2));
+      font-weight: 1000;
+      letter-spacing: .8px;
+      text-transform: uppercase;
+      cursor:pointer;
+      box-shadow: 0 16px 20px rgba(255,216,77,.26);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+      transition: transform .12s ease, filter .18s ease;
+    }
+    .btn:hover{ transform: translateY(-1px); filter: brightness(1.02); }
+    .btn:active{ transform: translateY(0); filter: brightness(.98); }
+    .btn:disabled{ opacity:.65; cursor:not-allowed; transform:none; }
+
+    .btnGhost{
+      margin-top: 12px;
+      width:100%;
+      padding: 12px 14px;
+      border-radius: 14px;
+      border: 1px solid rgba(12,31,29,.12);
+      background: rgba(255,255,255,.65);
+      font-weight: 1000;
+      letter-spacing: .7px;
+      text-transform: uppercase;
+      cursor:pointer;
+      color:#0d4b45;
+      box-shadow: var(--shadow-sm);
+      transition: transform .12s ease, filter .18s ease;
+      text-decoration: none;
+      display: block;
+      text-align: center;
+    }
+    .btnGhost:hover{ transform: translateY(-1px); filter: brightness(1.02); }
+    .btnGhost:active{ transform: translateY(0); filter: brightness(.98); }
+
+    .authTop{
+      text-align:center;
+      margin-top: 6px;
+      margin-bottom: 10px;
+    }
+    .authTop .appName{
+      font-size: 28px;
+      font-weight: 1100;
+      letter-spacing:.2px;
+      margin: 6px 0 0;
+      color:#0d4b45;
+    }
+    .dividerLine{
+      height:1px;
+      background: rgba(12,31,29,.12);
+      margin: 14px 0;
+    }
+
+    /* Inline link row (Forgot password, etc.) */
+    .rowEnd{
+      display:flex;
+      justify-content:flex-end;
+      margin-top: 10px;
+    }
+    .linkBtn{
+      border:none;
+      background:transparent;
+      cursor:pointer;
+      font-weight: 900;
+      color:#0d6a61;
+      letter-spacing:.2px;
+      padding:0;
+    }
+    .linkBtn:hover{ text-decoration: underline; }
+
+    /* Footer line */
+    .footerNote{
+      margin-top: 18px;
+      text-align:center;
+      color: var(--muted);
+      font-size: 12.5px;
+      line-height: 1.35;
+      padding: 0 10px;
+    }
+
+    /* Toast messages */
+    .toast{
+      margin-top: 12px;
+      font-size: 12.5px;
+      line-height: 1.35;
+      color: #2b3b39;
+      background: rgba(255,255,255,.72);
+      border: 1px solid rgba(12,31,29,.12);
+      border-radius: 14px;
+      padding: 12px 12px;
+      box-shadow: var(--shadow-sm);
+      white-space: pre-line;
+      text-align:center;
+    }
+    .toast.ok{ border-color: rgba(18,128,96,.35); }
+    .toast.err{ border-color: rgba(214,69,69,.35); }
+
+    .screen{
+      padding: 18px 16px 12px;
+      min-height: 560px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="phone">
+    <div class="header">
+      <div class="headerLeft">
+        <div class="logoMark" aria-hidden="true"><span>🚗</span></div>
+        <div class="brand">FindMy<span class="spot">Spot</span></div>
+      </div>
+      <button id="logoutBtn" style="color:#fff; background: rgba(255,255,255,.2); border: 1px solid rgba(255,255,255,.3); padding: 6px 12px; border-radius: 6px; cursor: pointer; margin-left: auto; margin-right: 0;" onclick="clearAndReload()" title="Clear cache">LOGOUT</button>
+    </div>
+
+    <!-- LOGIN SCREEN -->
+    <div class="screen">
+      <div class="authTop">
+        <div style="font-size:54px; filter: drop-shadow(0 10px 18px rgba(0,0,0,.10));"></div>
+        <div class="appName">FindMySpot</div>
+      </div>
+      <div class="form">
+        <label class="label">Email</label>
+        <input id="loginEmail" class="input" placeholder="Enter your email" type="email" />
+        <label class="label">Password</label>
+        <input id="loginPassword" class="input" placeholder="Enter your password" type="password" />
+
+        <div class="rowEnd">
+          <button class="linkBtn" onclick="forgotPassword()">Forgot password?</button>
+        </div>
+
+        <button id="btnLogin" class="btn" onclick="doLogin()">Sign In</button>
+
+        <div class="dividerLine"></div>
+
+        <a href="signup.html" class="btnGhost">Create Account</a>
+
+        <div id="loginMsg" class="toast hidden"></div>
+      </div>
+
+      <div class="footerNote">Your saved parking records are private.</div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE_URL = "http://localhost:3000";
+
+    function clearAndReload(){
+      localStorage.removeItem("fms_currentUser");
+      localStorage.removeItem("fms_userName");
+      document.getElementById("loginEmail").value = "";
+      document.getElementById("loginPassword").value = "";
+      document.getElementById("loginMsg").classList.add("hidden");
+      document.getElementById("loginEmail").focus();
+    }
+
+    function currentUser(){ return localStorage.getItem("fms_currentUser") || ""; }
+    function setCurrentUser(token){ 
+      if(token) localStorage.setItem("fms_currentUser", token);
+      else localStorage.removeItem("fms_currentUser");
+    }
+    function getUserName(){ return localStorage.getItem("fms_userName") || ""; }
+    function setUserName(name){ localStorage.setItem("fms_userName", name); }
+
+    function toast(elId, text, type){
+      const el = document.getElementById(elId);
+      el.textContent = text;
+      el.classList.remove("hidden","ok","err");
+      if(type === "ok") el.classList.add("ok");
+      if(type === "err") el.classList.add("err");
+    }
+
+    function forgotPassword(){
+      toast("loginMsg", "Forgot password placeholder.\n(Connect to email reset endpoint later.)", "ok");
+    }
+
+    async function doLogin(){
+      const loginMsg = document.getElementById("loginMsg");
+      loginMsg.classList.add("hidden");
+      
+      const email = (document.getElementById("loginEmail").value || "").trim().toLowerCase();
+      const pw = document.getElementById("loginPassword").value || "";
+      
+      if(!email || !pw){
+        toast("loginMsg", "Please enter your email and password.", "err");
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            email: email,
+            password: pw
+          })
+        });
+
+        const data = await response.json();
+
+        if(!response.ok){
+          toast("loginMsg", data.message || "Login failed", "err");
+          return;
+        }
+
+        setCurrentUser(data.data.token);
+        setUserName(data.data.name);
+        toast("loginMsg", "Signed in successfully! Redirecting...", "ok");
+        
+        setTimeout(() => {
+          window.location.href = "index.html";
+        }, 800);
+      } catch(error) {
+        console.error("Login error:", error);
+        toast("loginMsg", "Connection error. Make sure backend is running.", "err");
+      }
+    }
+  </script>
+</body>
+</html>
