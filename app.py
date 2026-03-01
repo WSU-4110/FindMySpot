@@ -1,6 +1,8 @@
 import cv2
 import re
 import time
+import random
+import requests
 from collections import Counter, deque
 
 import easyocr
@@ -8,31 +10,150 @@ import easyocr
 # Initialize EasyOCR reader
 reader = easyocr.Reader(['en'], gpu=False)
 
+# Backend API configuration
+BACKEND_API_URL = "http://localhost:3000/api/parking/checkin"
+
+# Variables for random floor/lot assignment
+assigned_floor = None
+assigned_lot = None
+
 last_printed_plate = ""
 last_ocr_time = 0.0
 ocr_interval_seconds = 0.9
-blocked_words = {# 50 States (Cleaned for OCR)
-    "ALABAMA", "ALASKA", "ARIZONA", "ARKANSAS", "CALIFORNIA", "COLORADO", 
-    "CONNECTICUT", "DELAWARE", "FLORIDA", "GEORGIA", "HAWAII", "IDAHO", 
-    "ILLINOIS", "INDIANA", "IOWA", "KANSAS", "KENTUCKY", "LOUISIANA", 
-    "MAINE", "MARYLAND", "MASSACHUSETTS", "MICHIGAN", "MINNESOTA", 
-    "MISSISSIPPI", "MISSOURI", "MONTANA", "NEBRASKA", "NEVADA", 
-    "NEWHAMPSHIRE", "NEWJERSEY", "NEWMEXICO", "NEWYORK", "NORTHCAROLINA", 
-    "NORTHDAKOTA", "OHIO", "OKLAHOMA", "OREGON", "PENNSYLVANIA", 
-    "RHODEISLAND", "SOUTHCAROLINA", "SOUTHDAKOTA", "TENNESSEE", "TEXAS", 
-    "UTAH", "VERMONT", "VIRGINIA", "WASHINGTON", "WESTVIRGINIA", 
-    "WISCONSIN", "WYOMING",
-    
-    # Common catch-alls/Slogans
-    "WASH", "PENN", "ALOHA", "SUNSHINE", "GARDENSTATE", "EMPIRESTATE"}
+blocked_words = {
+    "PERSON",
+    "CELLPHONE",
+    "CELL",
+    "PHONE",
+    "ALABAMA",
+    "ALASKA",
+    "ARIZONA",
+    "ARKANSAS",
+    "CALIFORNIA",
+    "COLORADO",
+    "CONNECTICUT",
+    "DELAWARE",
+    "FLORIDA",
+    "GEORGIA",
+    "HAWAII",
+    "IDAHO",
+    "ILLINOIS",
+    "INDIANA",
+    "IOWA",
+    "KANSAS",
+    "KENTUCKY",
+    "LOUISIANA",
+    "MAINE",
+    "MARYLAND",
+    "MASSACHUSETTS",
+    "MICHIGAN",
+    "MINNESOTA",
+    "MISSISSIPPI",
+    "MISSOURI",
+    "MONTANA",
+    "NEBRASKA",
+    "NEVADA",
+    "NEWHAMPSHIRE",
+    "NEWJERSEY",
+    "NEWMEXICO",
+    "NEWYORK",
+    "NORTHCAROLINA",
+    "NORTHDAKOTA",
+    "OHIO",
+    "OKLAHOMA",
+    "OREGON",
+    "PENNSYLVANIA",
+    "RHODEISLAND",
+    "SOUTHCAROLINA",
+    "SOUTHDAKOTA",
+    "TENNESSEE",
+    "TEXAS",
+    "UTAH",
+    "VERMONT",
+    "VIRGINIA",
+    "WASHINGTON",
+    "WESTVIRGINIA",
+    "WISCONSIN",
+    "WYOMING",
+    "AL",
+    "AK",
+    "AZ",
+    "AR",
+    "CA",
+    "CO",
+    "CT",
+    "DE",
+    "FL",
+    "GA",
+    "HI",
+    "ID",
+    "IL",
+    "IN",
+    "IA",
+    "KS",
+    "KY",
+    "LA",
+    "ME",
+    "MD",
+    "MA",
+    "MI",
+    "MN",
+    "MS",
+    "MO",
+    "MT",
+    "NE",
+    "NV",
+    "NH",
+    "NJ",
+    "NM",
+    "NY",
+    "NC",
+    "ND",
+    "OH",
+    "OK",
+    "OR",
+    "PA",
+    "RI",
+    "SC",
+    "SD",
+    "TN",
+    "TX",
+    "UT",
+    "VT",
+    "VA",
+    "WA",
+    "WV",
+    "WI",
+    "WY",
+}
 show_candidate_boxes = True
 show_debug_counts = True
 max_candidates_per_tick = 3
 min_confidence = 0.4
-recent_plate_window = deque(maxlen=8)
-min_consensus_hits = 4
+window_seconds = 5.0
+cooldown_seconds = 10.0
+min_votes = 3
+window_start_time = 0.0
+window_detections = []
 final_plate = ""
 finalized_at = 0.0
+
+
+def send_parking_checkin(plate, floor, lot):
+    """Send parking check-in data to backend API"""
+    try:
+        payload = {
+            "vehiclePlate": plate,
+            "floor": floor,
+            "lot": lot
+        }
+        response = requests.post(BACKEND_API_URL, json=payload, timeout=5)
+        if response.status_code == 200:
+            print(f"✓ Sent to backend: {plate} -> Floor {floor}, Lot {lot}", flush=True)
+        else:
+            print(f"✗ Backend error: {response.status_code}", flush=True)
+    except Exception as e:
+        print(f"✗ Failed to send to backend: {str(e)}", flush=True)
 
 
 def find_plate_candidates(gray_frame):
@@ -102,20 +223,9 @@ while True:
                     continue
                 if confidence < min_confidence:
                     continue
-                if not final_plate:
-                    recent_plate_window.append(cleaned)
-                    most_common = Counter(recent_plate_window).most_common(1)
-                    if most_common:
-                        consensus_plate, hits = most_common[0]
-                        if hits >= min_consensus_hits and consensus_plate != last_printed_plate:
-                            last_printed_plate = consensus_plate
-                            final_plate = consensus_plate
-                            finalized_at = time.time()
-                            timestamp = time.strftime("%H:%M:%S")
-                            print(
-                                f"[{timestamp}] License plate finalized: {consensus_plate}",
-                                flush=True,
-                            )
+                if window_start_time == 0.0:
+                    window_start_time = current_time
+                window_detections.append(cleaned)
                 cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
                 cv2.putText(
                     frame,
@@ -130,6 +240,35 @@ while True:
             if show_candidate_boxes:
                 cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 165, 0), 1)
 
+    if window_start_time and (current_time - window_start_time >= window_seconds):
+        if window_detections:
+            most_common = Counter(window_detections).most_common(1)
+            if most_common:
+                consensus_plate, hits = most_common[0]
+                cooldown_active = (
+                    consensus_plate == last_printed_plate
+                    and (current_time - finalized_at) < cooldown_seconds
+                )
+                if hits >= min_votes and not cooldown_active:
+                    last_printed_plate = consensus_plate
+                    final_plate = consensus_plate
+                    finalized_at = current_time
+                    
+                    # Randomly assign floor (1-5) and lot (1-5)
+                    assigned_floor = random.randint(1, 5)
+                    assigned_lot = random.randint(1, 5)
+                    
+                    timestamp = time.strftime("%H:%M:%S")
+                    print(
+                        f"[{timestamp}] License plate finalized: {consensus_plate} | Floor {assigned_floor} | Lot {assigned_lot}",
+                        flush=True,
+                    )
+                    
+                    # Send parking check-in to backend API
+                    send_parking_checkin(consensus_plate, assigned_floor, assigned_lot)
+        window_start_time = 0.0
+        window_detections = []
+
     if final_plate:
         cv2.putText(
             frame,
@@ -138,6 +277,28 @@ while True:
             cv2.FONT_HERSHEY_SIMPLEX,
             1.0,
             (0, 255, 0),
+            2,
+        )
+    
+    # Display floor and lot information
+    if assigned_floor is not None and assigned_lot is not None:
+        cv2.putText(
+            frame,
+            f"Floor {assigned_floor} | Lot {assigned_lot}",
+            (10, frame.shape[0] - 10),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.7,
+            (255, 255, 0),
+            2,
+        )
+    else:
+        cv2.putText(
+            frame,
+            "Waiting for vehicle detection...",
+            (10, frame.shape[0] - 10),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.7,
+            (255, 255, 0),
             2,
         )
 

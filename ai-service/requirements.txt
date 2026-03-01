@@ -1,0 +1,9 @@
+flask
+flask-cors
+opencv-python
+easyocr
+numpy
+sqlalchemy
+psycopg2-binary
+ultralytics
+requests
