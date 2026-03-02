@@ -51,6 +51,8 @@ class VehicleDatabase:
         try:
             self.conn = psycopg2.connect(**self.connection_params)
             logger.info("✓ VehicleDatabase connected to PostgreSQL")
+            # after connecting, ensure vehicles schema is prepared
+            self._create_tables()
         except psycopg2.Error as e:
             logger.error(f"✗ VehicleDatabase connection failed: {e}")
             raise
@@ -71,6 +73,52 @@ class VehicleDatabase:
             Normalized plate (uppercase, spaces removed)
         """
         return plate.upper().replace(' ', '').replace('-', '')
+
+    def _create_tables(self):
+        """Create the vehicles table and associated indexes if they don't already exist.
+
+        This method is invoked automatically when the database connection is
+        established so that callers can assume the schema exists.  It is safe to
+        run multiple times (uses ``IF NOT EXISTS`` clauses) and will not
+        overwrite existing data.
+        """
+        self.ensure_connection()
+        ddl = '''
+        CREATE TABLE IF NOT EXISTS vehicles (
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+            license_plate VARCHAR(20) NOT NULL,
+            make VARCHAR(50),
+            model VARCHAR(50),
+            color VARCHAR(30),
+            year INTEGER,
+            nickname VARCHAR(50),
+            floor VARCHAR(10),
+            spot VARCHAR(10),
+            is_primary BOOLEAN DEFAULT false,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+        '''
+        idx1 = 'CREATE INDEX IF NOT EXISTS idx_vehicles_user ON vehicles(user_id);'
+        idx2 = 'CREATE INDEX IF NOT EXISTS idx_vehicles_plate ON vehicles(license_plate);'
+        idx3 = '''
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_one_primary_per_user
+            ON vehicles(user_id) WHERE is_primary = true;
+        '''
+
+        try:
+            with self.conn.cursor() as cur:
+                cur.execute(ddl)
+                cur.execute(idx1)
+                cur.execute(idx2)
+                cur.execute(idx3)
+                self.conn.commit()
+            logger.info("✓ ensured vehicles table and indexes exist")
+        except psycopg2.Error as e:
+            self.conn.rollback()
+            logger.error(f"✗ Failed to create vehicles table: {e}")
+            raise
     
     def add_vehicle(self,
                    user_id: int,
