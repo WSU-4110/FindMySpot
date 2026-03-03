@@ -3,6 +3,8 @@ from flask_cors import CORS
 import cv2
 import re
 import time
+import random
+import requests
 from collections import Counter, deque
 import easyocr
 
@@ -12,12 +14,18 @@ CORS(app)
 # Initialize EasyOCR reader
 reader = easyocr.Reader(['en'], gpu=False)
 
+# Backend API configuration
+BACKEND_API_URL = "http://localhost:3000/api/parking/checkin"
+
+# Variables for random floor/lot assignment
+assigned_floor = None
+assigned_lot = None
+
 # Global variables
 last_printed_plate = ""
 last_ocr_time = 0.0
-ocr_interval_seconds = 1.0  # Run OCR every second
-blocked_words = {
-    # 50 States (Cleaned for OCR)
+ocr_interval_seconds = 0.9
+blocked_words = {# 50 States (Cleaned for OCR)
     "ALABAMA", "ALASKA", "ARIZONA", "ARKANSAS", "CALIFORNIA", "COLORADO", 
     "CONNECTICUT", "DELAWARE", "FLORIDA", "GEORGIA", "HAWAII", "IDAHO", 
     "ILLINOIS", "INDIANA", "IOWA", "KANSAS", "KENTUCKY", "LOUISIANA", 
@@ -28,43 +36,70 @@ blocked_words = {
     "RHODEISLAND", "SOUTHCAROLINA", "SOUTHDAKOTA", "TENNESSEE", "TEXAS", 
     "UTAH", "VERMONT", "VIRGINIA", "WASHINGTON", "WESTVIRGINIA", 
     "WISCONSIN", "WYOMING",
-    # Common OCR misreads of state names
-    "MICHIGA", "MICHICAN", "MCHIGAN", "MIGHIGAN", "MICHGAN",  # Michigan variations
-    "TEXA", "CALIF", "CALIFORN", "CALIFOR",
-    "FLOR", "FLORID", "GEORGI", "OREGO", "TENNESS", "PENNSY", "NEVAD",
-    # Slogans
-    "WASH", "PENN", "ALOHA", "SUNSHINE", "GARDENSTATE", "EMPIRESTATE",
-    "GREAT", "LAKES", "GREATLAKES", "SPLENDOR", "GLKSS", "GLAKES", "GLKESSI"
-}
-recent_plate_window = deque(maxlen=10)
-min_consensus_hits = 2  # Reduced from 3 to 2 for faster detection
+    
+    # Common catch-alls/Slogans
+    "WASH", "PENN", "ALOHA", "SUNSHINE", "GARDENSTATE", "EMPIRESTATE"}
+show_candidate_boxes = True
+show_debug_counts = True
+max_candidates_per_tick = 3
+min_confidence = 0.4
+recent_plate_window = deque(maxlen=8)
+min_consensus_hits = 4
 final_plate = ""
 finalized_at = 0.0
 
-# Initialize webcam
-camera = cv2.VideoCapture(0)
-camera.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 
+def find_plate_candidates(gray_frame):
+    # Edge-based plate candidate detection
+    blur = cv2.bilateralFilter(gray_frame, 11, 17, 17)
+    edges = cv2.Canny(blur, 20, 160)
+    contours, _ = cv2.findContours(edges, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
-def generate_frames():
-    """Generate frames with OCR overlay - SIMPLE WHOLE-FRAME APPROACH"""
-    global last_ocr_time, last_printed_plate, final_plate, finalized_at
+    candidates = []
+    for contour in contours:
+        x, y, w, h = cv2.boundingRect(contour)
+        if h == 0:
+            continue
+        aspect_ratio = w / float(h)
+        area = w * h
+        if area < 800 or area > 90000:
+            continue
+        if aspect_ratio < 1.6 or aspect_ratio > 7.0:
+            continue
+        if h < 14:
+            continue
+        candidates.append((x, y, w, h))
+
+    return candidates
+
+# Open webcam
+cap = cv2.VideoCapture(0)
+cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+
+print("Camera opened. Press 'q' to quit.")
+
+while True:
+    ret, frame = cap.read()
     
-    while True:
-        success, frame = camera.read()
-        if not success:
-            break
-        
-        # Run OCR periodically on THE ENTIRE FRAME
-        current_time = time.time()
-        if current_time - last_ocr_time >= ocr_interval_seconds:
-            last_ocr_time = current_time
-            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-            
-            print(f"=== OCR Scan ===", flush=True)
-            
-            # Run OCR on whole frame
+    if not ret:
+        print("Failed to read from camera")
+        break
+    
+    # Run OCR periodically to detect license plate text
+    current_time = time.time()
+    if current_time - last_ocr_time >= ocr_interval_seconds:
+        last_ocr_time = current_time
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        candidates = find_plate_candidates(gray)
+        if show_debug_counts:
+            print(f"OCR tick: {len(candidates)} candidate(s)", flush=True)
+
+        candidates = sorted(candidates, key=lambda c: c[2] * c[3], reverse=True)
+        candidates = candidates[:max_candidates_per_tick]
+
+        for x, y, w, h in candidates:
+            roi = gray[y:y + h, x:x + w]
             ocr_results = reader.readtext(
                 gray,
                 allowlist='ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 ',
@@ -223,110 +258,53 @@ def generate_frames():
                 if confidence < 0.12:
                     print(f"    SKIP (very low confidence)", flush=True)
                     continue
-                
-                # This passed all filters!
-                print(f"    ✓ VALID PLATE CANDIDATE", flush=True)
-                
-                # Draw boxes on frame for all fragments in this candidate
-                for box in candidate['boxes']:
-                    x, y, w, h = box['x'], box['y'], box['w'], box['h']
-                    cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
-                
-                # Draw the combined text
-                first_box = candidate['boxes'][0]
-                cv2.putText(frame, cleaned, (first_box['x'], max(0, first_box['y'] - 8)),
-                           cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
-                
-                # Add to consensus window
                 if not final_plate:
                     recent_plate_window.append(cleaned)
-                    
-                    # Use fuzzy matching - plates with same first 4 chars are likely the same
-                    # (OCR often misreads last digits)
-                    if len(cleaned) >= 4:
-                        prefix = cleaned[:4]  # e.g., "1DL0" from "1DL099" or "1DL093"
-                        similar_plates = [p for p in recent_plate_window if len(p) >= 4 and p[:4] == prefix]
-                        
-                        if len(similar_plates) >= min_consensus_hits:
-                            # Use the most common full plate among similar ones
-                            plate_counter = Counter(similar_plates)
-                            consensus_plate, hits = plate_counter.most_common(1)[0]
-                            
-                            if consensus_plate != last_printed_plate:
-                                last_printed_plate = consensus_plate
-                                final_plate = consensus_plate
-                                finalized_at = time.time()
-                                timestamp = time.strftime("%H:%M:%S")
-                                print(f"[{timestamp}] ★★★ FINAL PLATE: {consensus_plate} (from {len(similar_plates)} similar) ★★★", flush=True)
-                        else:
-                            # Fall back to exact matching
-                            most_common = Counter(recent_plate_window).most_common(1)
-                            if most_common:
-                                consensus_plate, hits = most_common[0]
-                                print(f"    Consensus: {consensus_plate} ({hits}/{min_consensus_hits} hits)", flush=True)
-                                if hits >= min_consensus_hits and consensus_plate != last_printed_plate:
-                                    last_printed_plate = consensus_plate
-                                    final_plate = consensus_plate
-                                    finalized_at = time.time()
-                                    timestamp = time.strftime("%H:%M:%S")
-                                    print(f"[{timestamp}] ★★★ FINAL PLATE: {consensus_plate} ★★★", flush=True)
-                    else:
-                        # Plate too short for fuzzy matching
-                        most_common = Counter(recent_plate_window).most_common(1)
-                        if most_common:
-                            consensus_plate, hits = most_common[0]
-                            print(f"    Consensus: {consensus_plate} ({hits}/{min_consensus_hits} hits)", flush=True)
-                            if hits >= min_consensus_hits and consensus_plate != last_printed_plate:
-                                last_printed_plate = consensus_plate
-                                final_plate = consensus_plate
-                                finalized_at = time.time()
-                                timestamp = time.strftime("%H:%M:%S")
-                                print(f"[{timestamp}] ★★★ FINAL PLATE: {consensus_plate} ★★★", flush=True)
+                    most_common = Counter(recent_plate_window).most_common(1)
+                    if most_common:
+                        consensus_plate, hits = most_common[0]
+                        if hits >= min_consensus_hits and consensus_plate != last_printed_plate:
+                            last_printed_plate = consensus_plate
+                            final_plate = consensus_plate
+                            finalized_at = time.time()
+                            timestamp = time.strftime("%H:%M:%S")
+                            print(
+                                f"[{timestamp}] License plate finalized: {consensus_plate}",
+                                flush=True,
+                            )
+                cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+                cv2.putText(
+                    frame,
+                    cleaned,
+                    (x, max(0, y - 8)),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.7,
+                    (0, 255, 0),
+                    2,
+                )
 
-        # Display final plate on frame
-        if final_plate:
-            cv2.putText(frame, f"FINAL: {final_plate}", (10, 30),
-                       cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 255, 0), 2)
+            if show_candidate_boxes:
+                cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 165, 0), 1)
 
-        # Encode frame as JPEG
-        ret, buffer = cv2.imencode('.jpg', frame)
-        frame_bytes = buffer.tobytes()
-        
-        yield (b'--frame\r\n'
-               b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
+    if final_plate:
+        cv2.putText(
+            frame,
+            f"FINAL: {final_plate}",
+            (10, 30),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            1.0,
+            (0, 255, 0),
+            2,
+        )
 
+    # Display the frame
+    cv2.imshow('YOLO Object Detection', frame)
+    
+    # Press 'q' to quit
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
 
-@app.route('/api/hello')
-def hello():
-    return jsonify({'message': 'Backend is connected!'})
-
-
-@app.route('/api/video')
-def video_feed():
-    return Response(generate_frames(),
-                    mimetype='multipart/x-mixed-replace; boundary=frame')
-
-
-@app.route('/api/plate')
-def get_plate():
-    return jsonify({
-        'plate': final_plate,
-        'timestamp': finalized_at
-    })
-
-
-@app.route('/api/reset', methods=['POST'])
-def reset_plate():
-    global final_plate, finalized_at, recent_plate_window, last_printed_plate
-    final_plate = ""
-    finalized_at = 0.0
-    recent_plate_window.clear()
-    last_printed_plate = ""
-    print("=== PLATE DETECTION RESET ===", flush=True)
-    return jsonify({'status': 'reset', 'message': 'Ready for new detection'})
-
-
-if __name__ == '__main__':
-    print("Starting SIMPLIFIED Flask server on http://localhost:5000")
-    print("This version runs OCR on the entire frame - slower but more reliable")
-    app.run(host='0.0.0.0', port=5000, debug=True, threaded=True)
+# Release resources
+cap.release()
+cv2.destroyAllWindows()
+print("Camera closed.")

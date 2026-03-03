@@ -45,7 +45,13 @@ CREATE TABLE IF NOT EXISTS vehicles (
     make VARCHAR(50),
     model VARCHAR(50),
     color VARCHAR(30),
-    is_primary BOOLEAN DEFAULT false
+    year INTEGER,
+    nickname VARCHAR(50),
+    floor VARCHAR(10),
+    spot VARCHAR(10),
+    is_primary BOOLEAN DEFAULT false,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX IF NOT EXISTS idx_vehicles_user ON vehicles(user_id);
@@ -168,7 +174,13 @@ CREATE TABLE IF NOT EXISTS vehicles (
     make VARCHAR(50),
     model VARCHAR(50),
     color VARCHAR(30),
-    is_primary BOOLEAN DEFAULT false
+    year INTEGER,
+    nickname VARCHAR(50),
+    floor VARCHAR(10),
+    spot VARCHAR(10),
+    is_primary BOOLEAN DEFAULT false,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX IF NOT EXISTS idx_vehicles_user ON vehicles(user_id);
