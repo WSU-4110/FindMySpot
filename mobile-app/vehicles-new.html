@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FindMySpot - My Vehicles</title>
+
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .vehicle-item {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 15px;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .vehicle-info h2 {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 600;
+    }
+    .vehicle-info p {
+      margin: 4px 0 0 0;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .plate-badge {
+      background: linear-gradient(135deg, #FFD700 0%, #FFC700 100%);
+      color: #000;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 12px;
+      border: 2px solid #333;
+      min-width: 80px;
+      text-align: center;
+    }
+    .delete-btn {
+      background: #ff6b6b;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 32px;
+      height: 32px;
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .delete-btn:hover {
+      background: #ff5252;
+    }
+    .notification-toggle {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 15px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin-bottom: 15px;
+    }
+    .toggle-switch {
+      width: 50px;
+      height: 28px;
+      background: #ccc;
+      border-radius: 14px;
+      cursor: pointer;
+      position: relative;
+      transition: background 0.3s;
+    }
+    .toggle-switch.active {
+      background: #4CAF50;
+    }
+    .toggle-switch::after {
+      content: '';
+      position: absolute;
+      width: 24px;
+      height: 24px;
+      background: white;
+      border-radius: 50%;
+      top: 2px;
+      left: 2px;
+      transition: left 0.3s;
+    }
+    .toggle-switch.active::after {
+      left: 22px;
+    }
+    .detection-history {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+    .loading {
+      text-align: center;
+      padding: 10px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="phone">
+  <div id="navBtn" class="menu-toggle" onclick="toggleNav()">☰</div>
+
+  <div id="mySidenav" class="sidenav">
+    <a href="index.html">🏠 Home / Find</a>
+    <a href="vehicles.html">🚗 My Vehicles</a>
+    <a href="terms.html">⚖️ Terms of Service</a>
+  </div>
+
+  <div class="header">
+    <div class="headerLeft" style="padding-left: 35px;"> 
+      <div class="logoMark"><span>🅿</span></div>
+      <div class="brand">Find My<span class="spot">Spot</span></div>
+    </div>
+    <div class="headerRight">
+      <button class="chipBtn" onclick="logout()">Logout</button>
+    </div>
+  </div>
+
+    <div class="screen">
+      <div class="titleRow">
+        <div class="carIcon">🚘</div>
+        <div>
+          <h1 class="h1">Saved Vehicles</h1>
+          <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">Manage your registered vehicles and receive detection alerts.</div>
+        </div>
+      </div>
+
+      <!-- Notification Settings -->
+      <div class="notification-toggle">
+        <div style="flex: 1;">
+          <div style="font-size: 14px; font-weight: 600;">Push Notifications</div>
+          <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">Get alerts when your plate is detected</div>
+        </div>
+        <div id="notificationToggle" class="toggle-switch active" onclick="toggleNotifications()"></div>
+      </div>
+
+      <!-- Vehicles List -->
+      <div id="vehicleList"></div>
+
+      <!-- Add New Vehicle Form -->
+      <div class="form">
+        <span class="label">Register New Vehicle</span>
+        <input id="nick" class="input" placeholder="Vehicle Name (e.g. Blue Jeep)" />
+        <div style="margin-top: 8px;"></div>
+        <input id="plate" class="input" placeholder="License Plate (e.g. ABC123)" />
+        <div style="margin-top: 8px;"></div>
+        <input id="makemodel" class="input" placeholder="Make & Model (optional)" />
+        <div style="margin-top: 8px;"></div>
+        <input id="color" class="input" placeholder="Color (optional)" />
+        <button class="btn" id="addVehicleBtn" onclick="addVehicle()">+ Register Vehicle</button>
+        <div id="vehicleMsg" class="toast hidden"></div>
+      </div>
+
+      <!-- Detection Status -->
+      <div id="detectionStatus" style="text-align: center; padding: 20px; font-size: 12px; color: var(--muted); display: none;">
+        Your registered vehicles are being monitored. You'll receive notifications when they're detected.
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE_URL = "http://localhost:3000";
+    
+    function currentUser() { 
+      return localStorage.getItem("fms_currentUser") || ""; 
+    }
+    
+    function setCurrentUser(token) { 
+      if(token) localStorage.setItem("fms_currentUser", token);
+      else localStorage.removeItem("fms_currentUser");
+    }
+
+    function logout() {
+      setCurrentUser("");
+      window.location.href = "login.html";
+    }
+
+    function toggleNav() {
+      const nav = document.getElementById("mySidenav");
+      const btn = document.getElementById("navBtn");
+      
+      if (nav.style.width === "180px") { 
+        nav.style.width = "0";
+        btn.classList.remove("open");
+      } else {
+        nav.style.width = "180px"; 
+        btn.classList.add("open");
+      }
+    }
+
+    function toast(elId, text, type) {
+      const el = document.getElementById(elId);
+      el.textContent = text;
+      el.classList.remove("hidden", "ok", "err");
+      if(type === "ok") el.classList.add("ok");
+      if(type === "err") el.classList.add("err");
+    }
+
+    let vehicles = [];
+    let notificationsEnabled = true;
+
+    async function loadVehicles() {
+      const token = currentUser();
+      if(!token) {
+        window.location.href = "login.html";
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/vehicles/${token}`);
+        const data = await response.json();
+
+        if(response.ok && data.data) {
+          vehicles = data.data;
+        }
+      } catch(error) {
+        console.error("Error loading vehicles:", error);
+      }
+
+      renderVehicles();
+    }
+
+    async function renderVehicles() {
+      const container = document.getElementById("vehicleList");
+      container.innerHTML = '';
+
+      if(vehicles.length === 0) {
+        container.innerHTML = '<div style="text-align:center; padding: 20px; font-size: 13px; color: var(--muted);">No vehicles registered yet. Add your first vehicle below.</div>';
+      } else {
+        for(let i = 0; i < vehicles.length; i++) {
+          const v = vehicles[i];
+          let detectionInfo = '';
+          
+          try {
+            const response = await fetch(`${API_BASE_URL}/api/detection/count/${v.license_plate}?token=${currentUser()}`);
+            if(response.ok) {
+              const data = await response.json();
+              if(data.data && data.data.todayCount > 0) {
+                detectionInfo = `<div class="detection-history">✓ Detected ${data.data.todayCount} time(s) today</div>`;
+              }
+            }
+          } catch(error) {
+            console.error("Error loading detection count:", error);
+          }
+
+          container.innerHTML += `
+            <div class="vehicle-item">
+              <div class="vehicle-info">
+                <h2>${v.vehicle_name || v.license_plate}</h2>
+                <p>PLATE: ${v.license_plate}</p>
+                ${v.make_model ? '<p>' + v.make_model + '</p>' : ''}
+                ${detectionInfo}
+              </div>
+              <div style="display:flex; align-items:center; gap:10px;">
+                <div class="plate-badge">${v.license_plate}</div>
+                <button class="delete-btn" onclick="deleteVehicle(${v.id})">×</button>
+              </div>
+            </div>
+          `;
+        }
+      }
+
+      // Show detection status
+      const statusEl = document.getElementById("detectionStatus");
+      if(vehicles.length > 0) {
+        statusEl.style.display = 'block';
+      }
+    }
+
+    async function addVehicle() {
+      const token = currentUser();
+      if(!token) {
+        window.location.href = "login.html";
+        return;
+      }
+
+      const nick = (document.getElementById("nick").value || "").trim();
+      const plate = (document.getElementById("plate").value || "").trim().toUpperCase();
+      const makemodel = (document.getElementById("makemodel").value || "").trim();
+      const color = (document.getElementById("color").value || "").trim();
+
+      if(!nick || !plate) {
+        toast("vehicleMsg", "Vehicle name and license plate are required.", "err");
+        return;
+      }
+
+      const btn = document.getElementById("addVehicleBtn");
+      btn.disabled = true;
+      btn.textContent = "Registering...";
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/vehicles/register/${token}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            licensePlate: plate,
+            vehicleName: nick,
+            makeModel: makemodel,
+            color: color
+          })
+        });
+
+        const data = await response.json();
+
+        if(!response.ok) {
+          toast("vehicleMsg", data.message || "Failed to register vehicle", "err");
+          btn.disabled = false;
+          btn.textContent = "+ Register Vehicle";
+          return;
+        }
+
+        toast("vehicleMsg", "Vehicle registered successfully!", "ok");
+        document.getElementById("nick").value = "";
+        document.getElementById("plate").value = "";
+        document.getElementById("makemodel").value = "";
+        document.getElementById("color").value = "";
+        
+        btn.disabled = false;
+        btn.textContent = "+ Register Vehicle";
+
+        await loadVehicles();
+      } catch(error) {
+        console.error("Error registering vehicle:", error);
+        toast("vehicleMsg", "Connection error. Make sure backend is running.", "err");
+        btn.disabled = false;
+        btn.textContent = "+ Register Vehicle";
+      }
+    }
+
+    async function deleteVehicle(vehicleId) {
+      const token = currentUser();
+      if(!token) {
+        window.location.href = "login.html";
+        return;
+      }
+
+      if(!confirm("Are you sure you want to delete this vehicle?")) {
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/vehicles/${token}/${vehicleId}`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+
+        const data = await response.json();
+
+        if(!response.ok) {
+          toast("vehicleMsg", data.message || "Failed to delete vehicle", "err");
+          return;
+        }
+
+        toast("vehicleMsg", "Vehicle deleted successfully", "ok");
+        await loadVehicles();
+      } catch(error) {
+        console.error("Error deleting vehicle:", error);
+        toast("vehicleMsg", "Connection error.", "err");
+      }
+    }
+
+    async function toggleNotifications() {
+      const token = currentUser();
+      if(!token) return;
+
+      notificationsEnabled = !notificationsEnabled;
+      const toggle = document.getElementById("notificationToggle");
+      
+      if(notificationsEnabled) {
+        toggle.classList.add("active");
+      } else {
+        toggle.classList.remove("active");
+      }
+
+      console.log("Notifications:", notificationsEnabled ? "enabled" : "disabled");
+    }
+
+    // Check if user is logged in
+    if(!currentUser()) {
+      window.location.href = "login.html";
+    } else {
+      loadVehicles();
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FindMySpot</title>
+  
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="phone">
+      <div id="navBtn" class="menu-toggle" onclick="toggleNav()">☰</div>
+
+
+    <div id="mySidenav" class="sidenav">
+    <a href="index.html">🏠 Home / Find</a>
+    <a href="vehicles.html">🚗 My Vehicles</a>
+    <a href="terms.html">⚖️ Terms of Service</a>
+  </div>
+
+  <div class="header">
+    <div class="headerLeft" style="padding-left: 35px;"> <div class="logoMark"><span>🅿</span></div>
+      <div class="brand">Find My<span class="spot">Spot</span></div>
+    </div>
+    <div class="headerRight">
+      <button class="chipBtn" onclick="logout()">Logout</button>
+    </div>
+  </div>
+
+  <div id="appNotifBanner" class="appBanner hidden" role="status" aria-live="polite">
+    <p id="appNotifText" class="appBannerText"></p>
+    <button class="appBannerBtn" onclick="dismissAppBanner()">Dismiss</button>
+  </div>
+
+   <div class="screen">
+    <div class="titleRow">
+     <div class="carIcon">⚖️</div>
+     <h1 class="h1">Terms of Service</h1>
+    </div>
+  
+<div class="meta" style="max-height: 450px; overflow-y: auto; white-space: normal;">
+        <p style="font-size: 11px; opacity: 0.7;">Last Updated: Feb 24, 2026</p>
+        <p>By using <strong>FindMySpot</strong>, you agree to these terms. If you do not agree, please discontinue use.</p>
+
+        <h2>1. Description</h2>
+        <p>FindMySpot is a tool to help you log your vehicle's location. We do not guarantee GPS accuracy in all areas.</p>
+
+        <h2>2. Safety</h2>
+        <p><strong>Never use this app while driving.</strong> Use it only when the vehicle is safely parked.</p>
+
+        <h2>3. Liability</h2>
+        <p>We are not responsible for:</p>
+        <ul>
+        <li>Parking tickets or towing.</li>
+        <li>Theft or damage to your car.</li>
+        <li>Inaccurate location pins.</li>
+        </ul>
+
+        <h2>4. Privacy</h2>
+        <p>Location data is stored locally to help you find your car and is not shared with third parties.</p>
+
+        <p style="margin-top:20px; font-size: 11px; border-top: 1px solid var(--line); padding-top: 10px;">
+        Project for WSU CSC 4110.
+        </p>
+    </div>
+   </div>
+
+   <script>
+    const API_BASE_URL = "http://localhost:3000";
+    let notifPollHandle = null;
+    const BANNER_DISMISS_KEY = "fms_bannerDismissedNotificationId";
+
+    function currentUser() {
+      return localStorage.getItem("fms_currentUser") || "";
+    }
+
+    function logout() {
+      localStorage.removeItem("fms_currentUser");
+      window.location.href = "login.html";
+    }
+
+    function toggleNav() {
+      const nav = document.getElementById("mySidenav");
+      const btn = document.getElementById("navBtn");
+      
+      if (nav.style.width === "180px") { 
+        nav.style.width = "0";
+        btn.classList.remove("open");
+      } else {
+        nav.style.width = "180px"; 
+        btn.classList.add("open");
+      }
+    }
+
+    function showAppBanner(message) {
+      const banner = document.getElementById("appNotifBanner");
+      const text = document.getElementById("appNotifText");
+      if(!banner || !text) return;
+      text.textContent = message;
+      banner.classList.remove("hidden");
+    }
+
+    function dismissAppBanner() {
+      const text = document.getElementById("appNotifText");
+      if(text && text.dataset.notificationId) {
+        localStorage.setItem(BANNER_DISMISS_KEY, text.dataset.notificationId);
+      }
+      const banner = document.getElementById("appNotifBanner");
+      if(banner) banner.classList.add("hidden");
+    }
+
+    async function checkUnreadNotifications() {
+      const token = currentUser();
+      if(!token) return;
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/notifications/unread/${token}`);
+        const data = await response.json();
+        if(!response.ok || !data?.data || data.data.length === 0) return;
+
+        const latest = data.data[0];
+        const latestId = String(latest.id || "");
+        const dismissedId = localStorage.getItem(BANNER_DISMISS_KEY) || "";
+        if(!latestId || latestId === dismissedId) return;
+
+        showAppBanner(latest.message || "Vehicle detected.");
+        const text = document.getElementById("appNotifText");
+        if(text) text.dataset.notificationId = latestId;
+      } catch(error) {
+        console.error("Banner notification check failed:", error);
+      }
+    }
+
+    function startNotificationBannerPolling() {
+      if(notifPollHandle) clearInterval(notifPollHandle);
+      checkUnreadNotifications();
+      notifPollHandle = setInterval(checkUnreadNotifications, 8000);
+    }
+
+    if(currentUser()) {
+      startNotificationBannerPolling();
+    }
+
+  </script>
+</body>

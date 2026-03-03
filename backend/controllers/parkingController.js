@@ -2,9 +2,9 @@ const { ParkingSpot, Vehicle, ParkingSession } = require('../models/parking');
 
 class ParkingController {
   // Get all parking spots
-  static getAllSpots(req, res) {
+  static async getAllSpots(req, res) {
     try {
-      const spots = ParkingSpot.getAll();
+      const spots = await ParkingSpot.getAll();
       res.json({
         success: true,
         data: spots
@@ -18,7 +18,7 @@ class ParkingController {
   }
 
   // Get spots by floor
-  static getSpotsByFloor(req, res) {
+  static async getSpotsByFloor(req, res) {
     try {
       const floor = parseInt(req.params.floor);
       if (floor < 1 || floor > 5) {
@@ -28,7 +28,7 @@ class ParkingController {
         });
       }
 
-      const spots = ParkingSpot.getByFloor(floor);
+      const spots = await ParkingSpot.getByFloor(floor);
       res.json({
         success: true,
         data: spots
@@ -42,7 +42,7 @@ class ParkingController {
   }
 
   // Get specific spot
-  static getSpot(req, res) {
+  static async getSpot(req, res) {
     try {
       const floor = parseInt(req.params.floor);
       const lot = parseInt(req.params.lot);
@@ -54,7 +54,7 @@ class ParkingController {
         });
       }
 
-      const spot = ParkingSpot.getByFloorAndLot(floor, lot);
+      const spot = await ParkingSpot.getByFloorAndLot(floor, lot);
       if (!spot) {
         return res.status(404).json({
           success: false,
@@ -75,9 +75,9 @@ class ParkingController {
   }
 
   // Get available spots
-  static getAvailableSpots(req, res) {
+  static async getAvailableSpots(req, res) {
     try {
-      const spots = ParkingSpot.getAvailable();
+      const spots = await ParkingSpot.getAvailable();
       res.json({
         success: true,
         count: spots.length,
@@ -92,9 +92,9 @@ class ParkingController {
   }
 
   // Get occupied spots
-  static getOccupiedSpots(req, res) {
+  static async getOccupiedSpots(req, res) {
     try {
-      const spots = ParkingSpot.getOccupied();
+      const spots = await ParkingSpot.getOccupied();
       res.json({
         success: true,
         count: spots.length,
@@ -109,9 +109,9 @@ class ParkingController {
   }
 
   // Get occupancy statistics
-  static getOccupancyStats(req, res) {
+  static async getOccupancyStats(req, res) {
     try {
-      const stats = ParkingSpot.getOccupancyStats();
+      const stats = await ParkingSpot.getOccupancyStats();
       res.json({
         success: true,
         data: stats
@@ -125,7 +125,7 @@ class ParkingController {
   }
 
   // Check in a vehicle (camera detection)
-  static checkIn(req, res) {
+  static async checkIn(req, res) {
     try {
       const { vehiclePlate, floor, lot } = req.body;
 
@@ -143,7 +143,7 @@ class ParkingController {
         });
       }
 
-      const session = ParkingSession.create(vehiclePlate, floor, lot);
+      const session = await ParkingSession.create(vehiclePlate, floor, lot);
       res.json({
         success: true,
         message: `Vehicle ${vehiclePlate} checked in to Floor ${floor}, Lot ${lot}`,
@@ -158,7 +158,7 @@ class ParkingController {
   }
 
   // Check out a vehicle
-  static checkOut(req, res) {
+  static async checkOut(req, res) {
     try {
       const { vehiclePlate } = req.body;
 
@@ -169,7 +169,7 @@ class ParkingController {
         });
       }
 
-      const session = ParkingSession.checkout(vehiclePlate);
+      const session = await ParkingSession.checkout(vehiclePlate);
       res.json({
         success: true,
         message: `Vehicle ${vehiclePlate} checked out`,
@@ -184,9 +184,9 @@ class ParkingController {
   }
 
   // Get active parking sessions
-  static getActiveSessions(req, res) {
+  static async getActiveSessions(req, res) {
     try {
-      const sessions = ParkingSession.getActive();
+      const sessions = await ParkingSession.getActive();
       res.json({
         success: true,
         count: sessions.length,
@@ -201,9 +201,9 @@ class ParkingController {
   }
 
   // Get all vehicles
-  static getAllVehicles(req, res) {
+  static async getAllVehicles(req, res) {
     try {
-      const vehicles = Vehicle.getAll();
+      const vehicles = await Vehicle.getAll();
       res.json({
         success: true,
         count: vehicles.length,
@@ -218,10 +218,10 @@ class ParkingController {
   }
 
   // Get vehicle by plate
-  static getVehicle(req, res) {
+  static async getVehicle(req, res) {
     try {
       const { plate } = req.params;
-      const vehicle = Vehicle.getByPlate(plate);
+      const vehicle = await Vehicle.getByPlate(plate);
 
       if (!vehicle) {
         return res.status(404).json({
@@ -230,7 +230,7 @@ class ParkingController {
         });
       }
 
-      const sessions = ParkingSession.getByVehicle(plate);
+      const sessions = await ParkingSession.getByVehicle(plate);
       res.json({
         success: true,
         data: {
