@@ -1,7 +1,9 @@
 const express = require('express');
 const cors = require('cors');
+require('dotenv').config();
 const parkingRoutes = require('./routes/parkingRoutes');
 const userRoutes = require('./routes/userRoutes');
+const { initializeDatabase } = require('./config/db');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -57,9 +59,19 @@ app.use((req, res) => {
 });
 
 // Start server
-app.listen(PORT, () => {
-  console.log(`FindMySpot API server running on port ${PORT}`);
-  console.log(`Visit http://localhost:${PORT} for API documentation`);
-});
+async function startServer() {
+  try {
+    await initializeDatabase();
+    app.listen(PORT, () => {
+      console.log(`FindMySpot API server running on port ${PORT}`);
+      console.log(`Visit http://localhost:${PORT} for API documentation`);
+    });
+  } catch (error) {
+    console.error('Failed to initialize database:', error.message);
+    process.exit(1);
+  }
+}
+
+startServer();
 
 module.exports = app;
