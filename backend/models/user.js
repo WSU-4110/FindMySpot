@@ -39,11 +39,16 @@ class User {
   }
 
   static async getByToken(token) {
+    console.log(`[USER] Looking up user with token: ${token.substring(0, 20)}...`);
     const result = await pool.query(
       'SELECT id, name, email FROM users WHERE token = $1',
       [token]
     );
-
+    if (result.rows[0]) {
+      console.log(`[USER] Found user ${result.rows[0].id} with token ${token.substring(0, 20)}...`);
+    } else {
+      console.log(`[USER] No user found with token ${token.substring(0, 20)}...`);
+    }
     return result.rows[0] || null;
   }
 
@@ -60,6 +65,33 @@ class User {
     const result = await pool.query(
       'SELECT id, name, email FROM users WHERE id = $1',
       [id]
+    );
+
+    return result.rows[0] || null;
+  }
+
+  static async getByIdForNotification(id) {
+    const result = await pool.query(
+      'SELECT id, name, email, push_notification_enabled, push_token FROM users WHERE id = $1',
+      [id]
+    );
+
+    return result.rows[0] || null;
+  }
+
+  static async updatePushToken(userId, pushToken) {
+    const result = await pool.query(
+      'UPDATE users SET push_token = $1 WHERE id = $2 RETURNING id, push_token',
+      [pushToken, userId]
+    );
+
+    return result.rows[0] || null;
+  }
+
+  static async toggleNotifications(userId, enabled) {
+    const result = await pool.query(
+      'UPDATE users SET push_notification_enabled = $1 WHERE id = $2 RETURNING id, push_notification_enabled',
+      [enabled, userId]
     );
 
     return result.rows[0] || null;

@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FindMySpot - My Vehicles</title>
+
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <div class="phone">
+  <div id="navBtn" class="menu-toggle" onclick="toggleNav()">☰</div>
+
+  <div id="mySidenav" class="sidenav">
+    <a href="index.html">🏠 Home / Find</a>
+    <a href="vehicles.html">🚗 My Vehicles</a>
+    <a href="history.html">🕘 Parking History</a>
+    <a href="terms.html">⚖️ Terms of Service</a>
+  </div>
+
+  <div class="header">
+    <div class="headerLeft" style="padding-left: 35px;"> <div class="logoMark"><span>🅿</span></div>
+      <div class="brand">Find My<span class="spot">Spot</span></div>
+    </div>
+    <div class="headerRight">
+      <button class="chipBtn" onclick="logout()">Logout</button>
+    </div>
+  </div>
+
+  <div id="appNotifBanner" class="appBanner hidden" role="status" aria-live="polite">
+    <p id="appNotifText" class="appBannerText"></p>
+    <button class="appBannerBtn" onclick="dismissAppBanner()">Dismiss</button>
+  </div>
+
+
+    <div class="screen">
+      <div class="titleRow">
+        <div class="carIcon">🚘</div>
+        <div>
+          <h1 class="h1">Saved Vehicles</h1>
+          <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">Manage your fleet for quick check-ins.</div>
+        </div>
+      </div>
+
+      <div id="vehicleList">
+        </div>
+
+      <div class="form">
+        <span class="label">Add New Vehicle</span>
+        <input id="nick" class="input" placeholder="Car Nickname (e.g. Blue Jeep)" />
+        <div style="margin-top: 8px;"></div>
+        <input id="plate" class="input" placeholder="License Plate" />
+        <button class="btn" onclick="addVehicle()">+ Save Vehicle</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE_URL = "http://localhost:3000";
+    let notifPollHandle = null;
+    const BANNER_DISMISS_KEY = "fms_bannerDismissedNotificationId";
+    
+    function currentUser() {
+      return localStorage.getItem('fms_currentUser');
+    }
+
+    function logout() {
+      localStorage.removeItem('fms_currentUser');
+      window.location.href = "login.html";
+    }
+
+    function toggleNav() {
+      const nav = document.getElementById("mySidenav");
+      const btn = document.getElementById("navBtn");
+      
+      if (nav.style.width === "180px") { 
+        nav.style.width = "0";
+        btn.classList.remove("open");
+      } else {
+        nav.style.width = "180px"; 
+        btn.classList.add("open");
+      }
+    }
+
+    function showAppBanner(message) {
+      const banner = document.getElementById("appNotifBanner");
+      const text = document.getElementById("appNotifText");
+      if(!banner || !text) return;
+      text.textContent = message;
+      banner.classList.remove("hidden");
+    }
+
+    function dismissAppBanner() {
+      const text = document.getElementById("appNotifText");
+      if(text && text.dataset.notificationId) {
+        localStorage.setItem(BANNER_DISMISS_KEY, text.dataset.notificationId);
+      }
+      const banner = document.getElementById("appNotifBanner");
+      if(banner) banner.classList.add("hidden");
+    }
+
+    async function checkUnreadNotifications() {
+      const token = currentUser();
+      if(!token) return;
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/notifications/unread/${token}`);
+        const data = await response.json();
+        if(!response.ok || !data?.data || data.data.length === 0) return;
+
+        const latest = data.data[0];
+        const latestId = String(latest.id || "");
+        const dismissedId = localStorage.getItem(BANNER_DISMISS_KEY) || "";
+        if(!latestId || latestId === dismissedId) return;
+
+        showAppBanner(latest.message || "Vehicle detected.");
+        const text = document.getElementById("appNotifText");
+        if(text) text.dataset.notificationId = latestId;
+      } catch (error) {
+        console.error("Banner notification check failed:", error);
+      }
+    }
+
+    function startNotificationBannerPolling() {
+      if(notifPollHandle) clearInterval(notifPollHandle);
+      checkUnreadNotifications();
+      notifPollHandle = setInterval(checkUnreadNotifications, 8000);
+    }
+
+    // Load vehicles from backend
+    async function loadVehicles() {
+      const token = currentUser();
+      if(!token) {
+        window.location.href = "login.html";
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/vehicles/${token}`);
+        const data = await response.json();
+        
+        if(response.ok && data.data) {
+          renderVehicles(data.data);
+        }
+      } catch(error) {
+        console.error("Error loading vehicles:", error);
+        renderVehicles([]);
+      }
+    }
+
+    function renderVehicles(vehicles) {
+      const container = document.getElementById("vehicleList");
+      container.innerHTML = vehicles.length === 0 ? 
+        '<div style="text-align:center; padding: 20px; font-size: 13px; color: var(--muted);">No vehicles registered yet.</div>' : '';
+      
+      vehicles.forEach((v) => {
+        container.innerHTML += `
+          <div class="vehicle-item">
+            <div class="vehicle-info">
+              <h2>${v.vehicle_name}</h2>
+              <p>PLATE: ${v.license_plate}</p>
+            </div>
+            <div style="display:flex; align-items:center; gap:10px;">
+              <div class="plate-badge">${v.license_plate}</div>
+              <button class="delete-btn" onclick="removeVehicle(${v.id})">×</button>
+            </div>
+          </div>
+        `;
+      });
+    }
+
+    async function addVehicle() {
+      const nick = document.getElementById("nick").value;
+      const plate = (document.getElementById("plate").value || "").trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
+      
+      if(!nick || !plate) {
+        alert("Fill in all fields!");
+        return;
+      }
+
+      const token = currentUser();
+      if(!token) {
+        window.location.href = "login.html";
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/vehicles`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            token,
+            licensePlate: plate,
+            vehicleName: nick
+          })
+        });
+
+        const data = await response.json();
+        
+        if(response.ok) {
+          document.getElementById("nick").value = "";
+          document.getElementById("plate").value = "";
+          alert("Vehicle registered successfully!");
+          loadVehicles();
+        } else {
+          alert("Error: " + (data.message || "Failed to register vehicle"));
+        }
+      } catch(error) {
+        console.error("Error registering vehicle:", error);
+        alert("Failed to register vehicle: " + error.message);
+      }
+    }
+
+    async function removeVehicle(vehicleId) {
+      if(!confirm("Remove this vehicle?")) return;
+
+      const token = currentUser();
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/vehicles/${vehicleId}`, {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ token })
+        });
+
+        if(response.ok) {
+          alert("Vehicle removed!");
+          loadVehicles();
+        } else {
+          alert("Error removing vehicle");
+        }
+      } catch(error) {
+        console.error("Error removing vehicle:", error);
+      }
+    }
+
+    // Load vehicles on page load
+    window.addEventListener('load', () => {
+      loadVehicles();
+      startNotificationBannerPolling();
+    });
+  </script>
+</body>
+</html>

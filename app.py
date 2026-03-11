@@ -11,7 +11,7 @@ import easyocr
 reader = easyocr.Reader(['en'], gpu=False)
 
 # Backend API configuration
-BACKEND_API_URL = "http://localhost:3000/api/parking/checkin"
+BACKEND_API_URL = "http://localhost:3000/api/detection/record"
 
 # Variables for random floor/lot assignment
 assigned_floor = None
@@ -140,15 +140,18 @@ finalized_at = 0.0
 
 
 def send_parking_checkin(plate, floor, lot):
-    """Send parking check-in data to backend API"""
+    """Send license plate detection to backend API"""
     try:
         payload = {
-            "vehiclePlate": plate,
+            "licensePlate": plate,
             "floor": floor,
-            "lot": lot
+            "lot": lot,
+            "location": f"Floor {floor}, Lot {lot}",
+            "confidence": 0.98,
+            "cameraId": "CAM_LOCAL"
         }
         response = requests.post(BACKEND_API_URL, json=payload, timeout=5)
-        if response.status_code == 200:
+        if response.status_code == 201:
             print(f"✓ Sent to backend: {plate} -> Floor {floor}, Lot {lot}", flush=True)
         else:
             print(f"✗ Backend error: {response.status_code}", flush=True)

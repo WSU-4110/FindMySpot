@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FindMySpot - Notifications</title>
+
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .notification-item {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 15px;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+    }
+    .notification-item.unread {
+      background: rgba(76, 175, 80, 0.05);
+      border-color: #4CAF50;
+    }
+    .notification-content {
+      flex: 1;
+    }
+    .notification-title {
+      font-weight: 600;
+      font-size: 14px;
+      margin: 0 0 4px 0;
+    }
+    .notification-message {
+      font-size: 13px;
+      color: var(--muted);
+      margin: 0 0 4px 0;
+    }
+    .notification-time {
+      font-size: 11px;
+      color: #999;
+    }
+    .notification-badge {
+      background: #4CAF50;
+      color: white;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      white-space: nowrap;
+    }
+    .notification-actions {
+      display: flex;
+      gap: 5px;
+    }
+    .action-btn {
+      background: none;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 14px;
+      padding: 5px;
+    }
+    .action-btn:hover {
+      color: #333;
+    }
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--muted);
+    }
+    .mark-all-btn {
+      background: #f0f0f0;
+      border: 1px solid var(--border);
+      color: #333;
+      padding: 8px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+      margin-bottom: 15px;
+      width: 100%;
+    }
+    .mark-all-btn:hover {
+      background: #e0e0e0;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="phone">
+  <div id="navBtn" class="menu-toggle" onclick="toggleNav()">☰</div>
+
+  <div id="mySidenav" class="sidenav">
+    <a href="index.html">🏠 Home / Find</a>
+    <a href="vehicles.html">🚗 My Vehicles</a>
+    <a href="history.html">🕘 Parking History</a>
+    <a href="terms.html">⚖️ Terms of Service</a>
+  </div>
+
+  <div class="header">
+    <div class="headerLeft" style="padding-left: 35px;"> 
+      <div class="logoMark"><span>🔔</span></div>
+      <div class="brand">Find My<span class="spot">Spot</span></div>
+    </div>
+    <div class="headerRight">
+      <button class="chipBtn" onclick="logout()">Logout</button>
+    </div>
+  </div>
+
+  <div id="appNotifBanner" class="appBanner hidden" role="status" aria-live="polite">
+    <p id="appNotifText" class="appBannerText"></p>
+    <button class="appBannerBtn" onclick="dismissAppBanner()">Dismiss</button>
+  </div>
+
+    <div class="screen">
+      <div class="titleRow">
+        <div style="font-size: 32px;">🔔</div>
+        <div>
+          <h1 class="h1">Notifications</h1>
+          <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">
+            Vehicle detection alerts
+            <span id="unreadBadge" style="background: #4CAF50; color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px; margin-left: 4px; display: none;">0 new</span>
+          </div>
+        </div>
+      </div>
+
+      <button id="markAllBtn" class="mark-all-btn" onclick="markAllAsRead()" style="display: none;">Mark all as read</button>
+
+      <div id="notificationList"></div>
+
+      <div id="emptyState" class="empty-state" style="display: none;">
+        <p style="font-size: 24px; margin: 0 0 10px 0;">📭</p>
+        <p>No notifications yet</p>
+        <p style="font-size: 12px; margin-top: 8px;">Register your vehicles to receive alerts</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE_URL = "http://localhost:3000";
+    const BANNER_DISMISS_KEY = "fms_bannerDismissedNotificationId";
+    
+    function currentUser() { 
+      return localStorage.getItem("fms_currentUser") || ""; 
+    }
+
+    function logout() {
+      localStorage.removeItem("fms_currentUser");
+      window.location.href = "login.html";
+    }
+
+    function toggleNav() {
+      const nav = document.getElementById("mySidenav");
+      const btn = document.getElementById("navBtn");
+      
+      if (nav.style.width === "180px") { 
+        nav.style.width = "0";
+        btn.classList.remove("open");
+      } else {
+        nav.style.width = "180px"; 
+        btn.classList.add("open");
+      }
+    }
+
+    function showAppBanner(message) {
+      const banner = document.getElementById("appNotifBanner");
+      const text = document.getElementById("appNotifText");
+      if(!banner || !text) return;
+      text.textContent = message;
+      banner.classList.remove("hidden");
+    }
+
+    function dismissAppBanner() {
+      const text = document.getElementById("appNotifText");
+      if(text && text.dataset.notificationId) {
+        localStorage.setItem(BANNER_DISMISS_KEY, text.dataset.notificationId);
+      }
+      const banner = document.getElementById("appNotifBanner");
+      if(banner) banner.classList.add("hidden");
+    }
+
+    function formatTime(timestamp) {
+      const date = new Date(timestamp);
+      const now = new Date();
+      const diff = now - date;
+      const minutes = Math.floor(diff / 60000);
+      const hours = Math.floor(diff / 3600000);
+      const days = Math.floor(diff / 86400000);
+
+      if (minutes < 1) return "Just now";
+      if (minutes < 60) return `${minutes}m ago`;
+      if (hours < 24) return `${hours}h ago`;
+      if (days < 7) return `${days}d ago`;
+      return date.toLocaleDateString();
+    }
+
+    let notifications = [];
+
+    async function loadNotifications() {
+      const token = currentUser();
+      if(!token) {
+        window.location.href = "login.html";
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/notifications/${token}?limit=100`);
+        const data = await response.json();
+
+        if(response.ok && data.data) {
+          notifications = data.data;
+          if(data.data.length > 0) {
+            const latest = data.data[0];
+            const latestId = String(latest.id || "");
+            const dismissedId = localStorage.getItem(BANNER_DISMISS_KEY) || "";
+            if(latestId && latestId !== dismissedId && !latest.is_read) {
+              showAppBanner(latest.message || "Vehicle detected.");
+              const text = document.getElementById("appNotifText");
+              if(text) text.dataset.notificationId = latestId;
+            }
+          }
+        }
+
+        // Get unread count
+        const countResponse = await fetch(`${API_BASE_URL}/api/notifications/count/${token}`);
+        const countData = await countResponse.json();
+        if(countResponse.ok) {
+          updateUnreadBadge(countData.unreadCount);
+        }
+      } catch(error) {
+        console.error("Error loading notifications:", error);
+      }
+
+      renderNotifications();
+    }
+
+    function updateUnreadBadge(count) {
+      const badge = document.getElementById("unreadBadge");
+      if(count > 0) {
+        badge.textContent = `${count} new`;
+        badge.style.display = 'inline-block';
+        document.getElementById("markAllBtn").style.display = 'block';
+      } else {
+        badge.style.display = 'none';
+        document.getElementById("markAllBtn").style.display = 'none';
+      }
+    }
+
+    function renderNotifications() {
+      const container = document.getElementById("notificationList");
+      const emptyState = document.getElementById("emptyState");
+      
+      container.innerHTML = '';
+
+      if(notifications.length === 0) {
+        emptyState.style.display = 'block';
+        return;
+      }
+
+      emptyState.style.display = 'none';
+
+      notifications.forEach((n, index) => {
+        const isUnread = !n.is_read;
+        const timeStr = formatTime(n.sent_at);
+        
+        container.innerHTML += `
+          <div class="notification-item ${isUnread ? 'unread' : ''}">
+            <div class="notification-content">
+              <p class="notification-title">
+                ${n.vehicle_name ? `🚗 ${n.vehicle_name}` : '🚗 Vehicle Detected'}
+              </p>
+              <p class="notification-message">${n.message}</p>
+              <p class="notification-time">${timeStr}</p>
+            </div>
+            <div class="notification-actions">
+              ${isUnread ? `<button class="action-btn" onclick="markAsRead(${n.id})" title="Mark as read">✓</button>` : ''}
+              <button class="action-btn" onclick="deleteNotification(${n.id})" title="Delete">✕</button>
+            </div>
+          </div>
+        `;
+      });
+    }
+
+    async function markAsRead(notificationId) {
+      const token = currentUser();
+      if(!token) return;
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/notifications/${token}/${notificationId}/read`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if(response.ok) {
+          await loadNotifications();
+        }
+      } catch(error) {
+        console.error("Error marking notification as read:", error);
+      }
+    }
+
+    async function markAllAsRead() {
+      const token = currentUser();
+      if(!token) return;
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/notifications/${token}/mark-all-read`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if(response.ok) {
+          await loadNotifications();
+        }
+      } catch(error) {
+        console.error("Error marking all as read:", error);
+      }
+    }
+
+    async function deleteNotification(notificationId) {
+      const token = currentUser();
+      if(!token) return;
+
+      if(!confirm("Delete this notification?")) return;
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/notifications/${token}/${notificationId}`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if(response.ok) {
+          await loadNotifications();
+        }
+      } catch(error) {
+        console.error("Error deleting notification:", error);
+      }
+    }
+
+    // Check if user is logged in
+    if(!currentUser()) {
+      window.location.href = "login.html";
+    } else {
+      loadNotifications();
+      // Refresh notifications every 10 seconds
+      setInterval(loadNotifications, 10000);
+    }
+  </script>
+</body>
+</html>

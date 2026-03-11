@@ -3,6 +3,9 @@ const cors = require('cors');
 require('dotenv').config();
 const parkingRoutes = require('./routes/parkingRoutes');
 const userRoutes = require('./routes/userRoutes');
+const vehicleRoutes = require('./routes/vehicleRoutes');
+const detectionRoutes = require('./routes/detectionRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
 const { initializeDatabase } = require('./config/db');
 
 const app = express();
@@ -16,6 +19,9 @@ app.use(express.urlencoded({ extended: true }));
 // Routes
 app.use('/api/parking', parkingRoutes);
 app.use('/api/auth', userRoutes);
+app.use('/api/vehicles', vehicleRoutes);
+app.use('/api/detection', detectionRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -28,14 +34,43 @@ app.get('/', (req, res) => {
     message: 'FindMySpot Parking Management API',
     version: '1.0.0',
     endpoints: {
-      spots: '/api/parking/spots',
-      available: '/api/parking/spots/available',
-      occupied: '/api/parking/spots/occupied',
-      stats: '/api/parking/stats',
-      checkin: 'POST /api/parking/checkin',
-      checkout: 'POST /api/parking/checkout',
-      sessions: '/api/parking/sessions/active',
-      vehicles: '/api/parking/vehicles'
+      auth: {
+        register: 'POST /api/auth/register',
+        login: 'POST /api/auth/login',
+        profile: 'GET /api/auth/profile/:token'
+      },
+      vehicles: {
+        register: 'POST /api/vehicles/register/:token',
+        getAll: 'GET /api/vehicles/:token',
+        history: 'GET /api/vehicles/:token/history',
+        update: 'PUT /api/vehicles/:token/:vehicleId',
+        delete: 'DELETE /api/vehicles/:token/:vehicleId'
+      },
+      detection: {
+        record: 'POST /api/detection/record',
+        history: 'GET /api/detection/history/:licensePlate',
+        count: 'GET /api/detection/count/:licensePlate',
+        recent: 'GET /api/detection/recent'
+      },
+      notifications: {
+        getAll: 'GET /api/notifications/:token',
+        getUnread: 'GET /api/notifications/unread/:token',
+        getCount: 'GET /api/notifications/count/:token',
+        markRead: 'PUT /api/notifications/:token/:notificationId/read',
+        markAllRead: 'PUT /api/notifications/:token/mark-all-read',
+        delete: 'DELETE /api/notifications/:token/:notificationId'
+      },
+      parking: {
+        spots: 'GET /api/parking/spots',
+        available: 'GET /api/parking/spots/available',
+        occupied: 'GET /api/parking/spots/occupied',
+        stats: 'GET /api/parking/stats',
+        locate: 'GET /api/parking/locate/:plate',
+        directions: 'GET /api/parking/directions/:plate',
+        usageReport: 'GET /api/parking/reports/usage?hoursBack=24',
+        securityFlags: 'GET /api/parking/security/flags',
+        securityScan: 'POST /api/parking/security/scan?maxDurationHours=24'
+      }
     }
   });
 });

@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FindMySpot - Parking History</title>
+
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .history-item {
+      background: rgba(255, 255, 255, 0.88);
+      border: 1px solid rgba(12, 31, 29, 0.12);
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 10px;
+      box-shadow: var(--shadow-sm);
+    }
+    .history-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .plate-badge {
+      background: linear-gradient(135deg, #ffd84d 0%, #ffcc2f 100%);
+      color: #0b1b1a;
+      border: 1px solid rgba(0, 0, 0, 0.15);
+      border-radius: 8px;
+      padding: 6px 10px;
+      font-weight: 900;
+      font-size: 12px;
+      letter-spacing: 0.3px;
+    }
+    .spot-chip {
+      background: rgba(15, 106, 97, 0.1);
+      border: 1px solid rgba(15, 106, 97, 0.18);
+      color: #0d4b45;
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 11px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+    .history-meta {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 7px;
+      font-size: 12px;
+      color: #294240;
+    }
+    .meta-label {
+      color: var(--muted);
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      margin-right: 6px;
+    }
+    .empty-state {
+      text-align: center;
+      color: var(--muted);
+      padding: 24px 12px;
+      background: rgba(255, 255, 255, 0.72);
+      border: 1px solid rgba(12, 31, 29, 0.1);
+      border-radius: 12px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="phone">
+  <div id="navBtn" class="menu-toggle" onclick="toggleNav()">☰</div>
+
+  <div id="mySidenav" class="sidenav">
+    <a href="index.html">🏠 Home / Find</a>
+    <a href="vehicles.html">🚗 My Vehicles</a>
+    <a href="history.html">🕘 Parking History</a>
+    <a href="terms.html">⚖️ Terms of Service</a>
+  </div>
+
+  <div class="header">
+    <div class="headerLeft" style="padding-left: 35px;">
+      <div class="logoMark"><span>🕘</span></div>
+      <div class="brand">Find My<span class="spot">Spot</span></div>
+    </div>
+    <div class="headerRight">
+      <button class="chipBtn" onclick="logout()">Logout</button>
+    </div>
+  </div>
+
+  <div class="screen">
+    <div class="titleRow">
+      <div class="carIcon">📋</div>
+      <div>
+        <h1 class="h1">Parking History</h1>
+        <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">Past sessions for your saved vehicles.</div>
+      </div>
+    </div>
+
+    <div id="historyList" style="margin-top: 14px;"></div>
+  </div>
+  </div>
+
+  <script>
+    const API_BASE_URL = "http://localhost:3000";
+
+    function currentUser() {
+      return localStorage.getItem("fms_currentUser") || "";
+    }
+
+    function logout() {
+      localStorage.removeItem("fms_currentUser");
+      window.location.href = "login.html";
+    }
+
+    function toggleNav() {
+      const nav = document.getElementById("mySidenav");
+      const btn = document.getElementById("navBtn");
+
+      if (nav.style.width === "180px") {
+        nav.style.width = "0";
+        btn.classList.remove("open");
+      } else {
+        nav.style.width = "180px";
+        btn.classList.add("open");
+      }
+    }
+
+    function formatTimestamp(timestamp) {
+      if (!timestamp) return "-";
+      const date = new Date(timestamp);
+      if (Number.isNaN(date.getTime())) return "-";
+      return date.toLocaleString();
+    }
+
+    function renderHistory(items) {
+      const container = document.getElementById("historyList");
+
+      if (!items || items.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div style="font-size: 26px;">🅿️</div>
+            <div style="margin-top: 8px; font-weight: 800; color: #214240;">No parking sessions yet</div>
+            <div style="margin-top: 4px; font-size: 12px;">Check in a saved vehicle to build your history.</div>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = items.map((item) => {
+        const checkoutText = item.check_out_time ? formatTimestamp(item.check_out_time) : "Active session";
+        return `
+          <div class="history-item">
+            <div class="history-top">
+              <div class="plate-badge">${item.license_plate || "-"}</div>
+              <div class="spot-chip">Spot ${item.spot_number || "-"}</div>
+            </div>
+            <div class="history-meta">
+              <div><span class="meta-label">Vehicle:</span>${item.vehicle_name || item.license_plate || "-"}</div>
+              <div><span class="meta-label">Floor/Area:</span>${item.parking_area || "-"}</div>
+              <div><span class="meta-label">Parked At:</span>${formatTimestamp(item.check_in_time)}</div>
+              <div><span class="meta-label">Ended At:</span>${checkoutText}</div>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    async function loadHistory() {
+      const token = currentUser();
+      if (!token) {
+        window.location.href = "login.html";
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/vehicles/${token}/history?limit=200`);
+        const data = await response.json();
+
+        if (!response.ok) {
+          renderHistory([]);
+          return;
+        }
+
+        renderHistory(data.data || []);
+      } catch (error) {
+        console.error("Error loading parking history:", error);
+        renderHistory([]);
+      }
+    }
+
+    if (!currentUser()) {
+      window.location.href = "login.html";
+    } else {
+      loadHistory();
+    }
+  </script>
+</body>
+</html>
