@@ -90,6 +90,42 @@ class VehicleController {
     }
   }
 
+  // Get parking session history for the user's saved vehicles
+  static async getUserParkingHistory(req, res) {
+    try {
+      const { token } = req.params;
+      const { limit = 100 } = req.query;
+
+      if (!token) {
+        return res.status(400).json({
+          success: false,
+          message: 'Token is required'
+        });
+      }
+
+      const user = await User.getByToken(token);
+      if (!user) {
+        return res.status(401).json({
+          success: false,
+          message: 'Invalid or expired token'
+        });
+      }
+
+      const history = await UserVehicle.getParkingHistoryByUserId(user.id, parseInt(limit, 10));
+
+      res.json({
+        success: true,
+        count: history.length,
+        data: history
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: error.message
+      });
+    }
+  }
+
   // Update a vehicle
   static async updateVehicle(req, res) {
     try {

@@ -2,6 +2,47 @@ const DetectionEvent = require('../models/detection');
 const UserVehicle = require('../models/vehicle');
 const Notification = require('../models/notification');
 const { User } = require('../models/user');
+const { ParkingSession, Vehicle } = require('../models/parking');
+
+// Track auto-checkout timers (in-memory)
+const autoCheckoutTimers = {};
+
+// Helper to schedule auto-checkout after 10 minutes
+function scheduleAutoCheckout(licensePlate, delayMs = 10 * 60 * 1000) {
+  // Cancel any existing timer for this plate
+  if (autoCheckoutTimers[licensePlate]) {
+    clearTimeout(autoCheckoutTimers[licensePlate]);
+  }
+
+  // Schedule new timer
+  autoCheckoutTimers[licensePlate] = setTimeout(async () => {
+    try {
+      await ParkingSession.checkout(licensePlate);
+      console.log(`[AUTO-CHECKOUT] Vehicle ${licensePlate} auto-checked out after 10 minutes`);
+    } catch (error) {
+      console.error(`[AUTO-CHECKOUT] Failed to auto-checkout ${licensePlate}: ${error.message}`);
+    }
+    delete autoCheckoutTimers[licensePlate];
+  }, delayMs);
+
+  console.log(`[AUTO-CHECKOUT] Scheduled auto-checkout for ${licensePlate} in 10 minutes`);
+}
+
+function clearAutoCheckoutTimer(licensePlate) {
+  if (autoCheckoutTimers[licensePlate]) {
+    clearTimeout(autoCheckoutTimers[licensePlate]);
+    delete autoCheckoutTimers[licensePlate];
+  }
+}
+
+function isExitEvent(eventType, location) {
+  if (String(eventType || '').toUpperCase() === 'EXIT') {
+    return true;
+  }
+
+  const locationText = String(location || '').toUpperCase();
+  return locationText.includes('EXIT') || locationText.includes('GATE OUT');
+}
 
 class DetectionController {
   // Record a detected license plate (called by cameras/AI service)
@@ -15,7 +56,8 @@ class DetectionController {
         confidence = 0.95,
         cameraId,
         latitude,
-        longitude 
+        longitude,
+        eventType = 'ENTRY'
       } = req.body;
 
       if (!licensePlate) {
@@ -26,8 +68,11 @@ class DetectionController {
       }
 
       // Record the detection
+      const normalizedPlate = String(licensePlate || '').toUpperCase().trim();
+      const exitEvent = isExitEvent(eventType, location);
+
       const detection = await DetectionEvent.recordDetection(
-        licensePlate,
+        normalizedPlate,
         floor,
         lot,
         location,
@@ -37,64 +82,109 @@ class DetectionController {
         longitude
       );
 
-      // Check if this plate is registered
-      const vehicle = await UserVehicle.getByLicensePlate(licensePlate);
-
-      if (vehicle) {
-        console.log(`[DETECTION] Vehicle found for plate ${licensePlate}, user_id: ${vehicle.user_id}`);
-        // Get the user info
-        const user = await User.getByIdForNotification(vehicle.user_id);
-        
-        if (user) {
-          // Create notification for registered vehicle
-          const locationStr = location || `Floor ${floor}, Lot ${lot}`;
-          try {
-            const notification = await Notification.create(
-              vehicle.user_id,
-              vehicle.id,
-              detection.id,
-              'Vehicle Detected',
-              `Your registered license plate ${licensePlate} was detected at ${locationStr}`,
-              locationStr,
-              detection.detected_at
-            );
-
-            console.log(`[DETECTION] Notification created for user ${vehicle.user_id}: ${notification.id}`);
-
-            // Only send push notification if user has enabled it
-            if (user.push_notification_enabled) {
-              // TODO: Send push notification via FCM, OneSignal, or similar service
-              console.log(`Push notification sent to user ${vehicle.user_id}`);
-            }
-
-            return res.status(201).json({
-              success: true,
-              message: 'Detection recorded and user notified',
-              matched: true,
-              data: {
-                detection,
-                notification
-              }
-            });
-          } catch (notificationError) {
-            console.error(`Failed to create notification: ${notificationError.message}`);
-            // Still return success for detection, but note it failed
-            return res.status(201).json({
-              success: true,
-              message: 'Detection recorded (notification creation failed)',
-              data: { detection },
-              matched: true,
-              notificationError: notificationError.message
-            });
-          }
+      // Create parking session if floor and lot are provided
+      let parkingSession = null;
+      let parkingError = null;
+      let sessionClosedByExit = null;
+      if (exitEvent) {
+        try {
+          sessionClosedByExit = await ParkingSession.closeByExitDetection(normalizedPlate, {
+            cameraId: cameraId || null,
+            detectedAt: detection.detected_at,
+            location: location || null
+          });
+          clearAutoCheckoutTimer(normalizedPlate);
+          console.log(`[PARKING] Exit detected. Session closed for ${normalizedPlate}`);
+        } catch (err) {
+          parkingError = `Exit detected but no active session was closed: ${err.message}`;
+          console.error(`[PARKING] ${parkingError}`);
         }
+      } else if (floor != null && lot != null) {
+        try {
+          // Create vehicle record
+          await Vehicle.create(normalizedPlate);
+          
+          // Create or update parking session
+          parkingSession = await ParkingSession.create(normalizedPlate, floor, lot);
+          console.log(`[PARKING] Session created for ${normalizedPlate} at Floor ${floor}, Lot ${lot}`);
+          
+          // Schedule auto-checkout after 10 minutes
+          scheduleAutoCheckout(normalizedPlate);
+        } catch (err) {
+          // If parking session creation fails (e.g., spot already occupied), log but continue
+          console.error(`[PARKING] Failed to create session: ${err.message}`);
+          parkingError = err.message;
+        }
+      }
+
+      // Check all registered vehicles that match this plate
+      const matchingVehicles = await UserVehicle.getAllByLicensePlate(normalizedPlate);
+      const locationStr = location || `Floor ${floor}, Lot ${lot}`;
+      const notifications = [];
+      const notificationErrors = [];
+
+      for (const vehicle of matchingVehicles) {
+        console.log(`[DETECTION] Vehicle found for plate ${normalizedPlate}, user_id: ${vehicle.user_id}`);
+        const user = await User.getByIdForNotification(vehicle.user_id);
+        if (!user) {
+          continue;
+        }
+
+        try {
+          const notification = await Notification.create(
+            vehicle.user_id,
+            vehicle.id,
+            detection.id,
+            exitEvent ? 'Vehicle Exit Detected' : 'Vehicle Detected',
+            exitEvent
+              ? `Your registered license plate ${normalizedPlate} has exited via ${locationStr}`
+              : `Your registered license plate ${normalizedPlate} was detected at ${locationStr}`,
+            locationStr,
+            detection.detected_at
+          );
+
+          notifications.push(notification);
+          console.log(`[DETECTION] Notification created for user ${vehicle.user_id}: ${notification.id}`);
+
+          if (user.push_notification_enabled) {
+            // TODO: Send push notification via FCM, OneSignal, or similar service
+            console.log(`Push notification sent to user ${vehicle.user_id}`);
+          }
+        } catch (notificationError) {
+          console.error(`Failed to create notification for user ${vehicle.user_id}: ${notificationError.message}`);
+          notificationErrors.push({ userId: vehicle.user_id, error: notificationError.message });
+        }
+      }
+
+      if (notifications.length > 0) {
+        return res.status(201).json({
+          success: true,
+          message: exitEvent
+            ? 'Exit detection recorded and user notified'
+            : 'Detection recorded and user notified',
+          matched: true,
+          parkingSessionCreated: !!parkingSession,
+          sessionClosedByExit: !!sessionClosedByExit,
+          parkingError,
+          data: {
+            detection,
+            notifications,
+            parkingSession,
+            sessionClosedByExit
+          },
+          notificationErrors
+        });
       }
 
       res.status(201).json({
         success: true,
-        message: 'Detection recorded',
-        data: { detection },
-        matched: !!vehicle
+        message: exitEvent ? 'Exit detection recorded' : 'Detection recorded',
+        parkingSessionCreated: !!parkingSession,
+        sessionClosedByExit: !!sessionClosedByExit,
+        parkingError,
+        data: { detection, parkingSession, sessionClosedByExit },
+        matched: matchingVehicles.length > 0,
+        notificationErrors
       });
     } catch (error) {
       res.status(500).json({
@@ -133,8 +223,8 @@ class DetectionController {
       }
 
       // Verify user owns this vehicle
-      const vehicle = await UserVehicle.getByLicensePlate(licensePlate);
-      if (!vehicle || vehicle.user_id !== user.id) {
+      const vehicle = await UserVehicle.getByUserIdAndLicensePlate(user.id, licensePlate);
+      if (!vehicle) {
         return res.status(403).json({
           success: false,
           message: 'Unauthorized'
@@ -208,8 +298,8 @@ class DetectionController {
       }
 
       // Verify user owns this vehicle
-      const vehicle = await UserVehicle.getByLicensePlate(licensePlate);
-      if (!vehicle || vehicle.user_id !== user.id) {
+      const vehicle = await UserVehicle.getByUserIdAndLicensePlate(user.id, licensePlate);
+      if (!vehicle) {
         return res.status(403).json({
           success: false,
           message: 'Unauthorized'

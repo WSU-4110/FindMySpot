@@ -1,4 +1,29 @@
-const { ParkingSpot, Vehicle, ParkingSession } = require('../models/parking');
+const { ParkingSpot, Vehicle, ParkingSession, SecurityFlag } = require('../models/parking');
+
+// Track auto-checkout timers (in-memory)
+const autoCheckoutTimers = {};
+let lastKnownOccupancyStats = null;
+
+// Helper to schedule auto-checkout after 10 minutes
+function scheduleAutoCheckout(licensePlate, delayMs = 10 * 60 * 1000) {
+  // Cancel any existing timer for this plate
+  if (autoCheckoutTimers[licensePlate]) {
+    clearTimeout(autoCheckoutTimers[licensePlate]);
+  }
+
+  // Schedule new timer
+  autoCheckoutTimers[licensePlate] = setTimeout(async () => {
+    try {
+      await ParkingSession.checkout(licensePlate);
+      console.log(`[AUTO-CHECKOUT] Vehicle ${licensePlate} auto-checked out after 10 minutes`);
+    } catch (error) {
+      console.error(`[AUTO-CHECKOUT] Failed to auto-checkout ${licensePlate}: ${error.message}`);
+    }
+    delete autoCheckoutTimers[licensePlate];
+  }, delayMs);
+
+  console.log(`[AUTO-CHECKOUT] Scheduled auto-checkout for ${licensePlate} in 10 minutes`);
+}
 
 class ParkingController {
   // Get all parking spots
@@ -112,11 +137,22 @@ class ParkingController {
   static async getOccupancyStats(req, res) {
     try {
       const stats = await ParkingSpot.getOccupancyStats();
+      lastKnownOccupancyStats = stats;
       res.json({
         success: true,
+        stale: false,
         data: stats
       });
     } catch (error) {
+      if (lastKnownOccupancyStats) {
+        return res.json({
+          success: true,
+          stale: true,
+          message: 'Real-time update unavailable. Showing the most recent known occupancy data.',
+          data: lastKnownOccupancyStats
+        });
+      }
+
       res.status(500).json({
         success: false,
         message: error.message
@@ -144,6 +180,10 @@ class ParkingController {
       }
 
       const session = await ParkingSession.create(vehiclePlate, floor, lot);
+      
+      // Schedule auto-checkout after 10 minutes
+      scheduleAutoCheckout(vehiclePlate);
+      
       res.json({
         success: true,
         message: `Vehicle ${vehiclePlate} checked in to Floor ${floor}, Lot ${lot}`,
@@ -170,6 +210,12 @@ class ParkingController {
       }
 
       const session = await ParkingSession.checkout(vehiclePlate);
+
+      if (autoCheckoutTimers[vehiclePlate]) {
+        clearTimeout(autoCheckoutTimers[vehiclePlate]);
+        delete autoCheckoutTimers[vehiclePlate];
+      }
+
       res.json({
         success: true,
         message: `Vehicle ${vehiclePlate} checked out`,
@@ -231,12 +277,142 @@ class ParkingController {
       }
 
       const sessions = await ParkingSession.getByVehicle(plate);
+      const location = await ParkingSession.locateVehicle(plate);
       res.json({
         success: true,
         data: {
           vehicle,
-          sessions
+          sessions,
+          location
         }
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: error.message
+      });
+    }
+  }
+
+  // FR5 - Precise mapping details for a located vehicle
+  static async locateVehicleWithSpot(req, res) {
+    try {
+      const { plate } = req.params;
+      const location = await ParkingSession.locateVehicle(plate);
+
+      if (!location) {
+        return res.status(404).json({
+          success: false,
+          message: 'Vehicle location not found'
+        });
+      }
+
+      const hasSpotData = location.floor != null && location.lot != null;
+      res.json({
+        success: true,
+        preciseSpotAvailable: hasSpotData,
+        message: hasSpotData
+          ? 'Exact parking spot found.'
+          : 'Spot data is missing. Showing available location details only.',
+        data: {
+          vehiclePlate: location.vehiclePlate,
+          floor: location.floor,
+          area: location.area,
+          lot: location.lot,
+          spotNumber: location.spotNumber,
+          locationDescription: location.locationDescription,
+          parkedSince: location.checkInTime,
+          sessionActive: location.sessionActive
+        }
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: error.message
+      });
+    }
+  }
+
+  // FR7 - Return visual or step-by-step directions
+  static async getVehicleDirections(req, res) {
+    try {
+      const { plate } = req.params;
+      const directions = await ParkingSession.getDirectionsForVehicle(plate);
+
+      if (!directions) {
+        return res.status(404).json({
+          success: false,
+          message: 'Vehicle location not found for directions.'
+        });
+      }
+
+      if (!directions.navigationAvailable) {
+        return res.json({
+          success: true,
+          navigationAvailable: false,
+          message: 'Navigation data unavailable. Displaying static location details.',
+          data: directions
+        });
+      }
+
+      res.json({
+        success: true,
+        navigationAvailable: true,
+        data: directions
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: error.message
+      });
+    }
+  }
+
+  // FR11 - Usage and efficiency analytics reporting
+  static async getUsageAnalyticsReport(req, res) {
+    try {
+      const { hoursBack = 24 } = req.query;
+      const report = await ParkingSession.getUsageReport(hoursBack);
+      res.json({
+        success: true,
+        data: report
+      });
+    } catch (error) {
+      console.error('[ANALYTICS] Failed to generate report:', error.message);
+      res.status(500).json({
+        success: false,
+        message: 'Report generation failed. Administrators have been notified.'
+      });
+    }
+  }
+
+  // FR12 - Scan and persist security flags
+  static async runSecurityFlagScan(req, res) {
+    try {
+      const { maxDurationHours = 24 } = req.query;
+      const result = await ParkingSession.scanAndFlagSecurityIssues(maxDurationHours);
+
+      res.json({
+        success: true,
+        message: 'Security flag scan completed.',
+        data: result
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: error.message
+      });
+    }
+  }
+
+  static async getOpenSecurityFlags(req, res) {
+    try {
+      const { limit = 100 } = req.query;
+      const flags = await SecurityFlag.getOpen(limit);
+      res.json({
+        success: true,
+        count: flags.length,
+        data: flags
       });
     } catch (error) {
       res.status(500).json({

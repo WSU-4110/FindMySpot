@@ -15,6 +15,7 @@
   <div id="mySidenav" class="sidenav">
     <a href="index.html">🏠 Home / Find</a>
     <a href="vehicles.html">🚗 My Vehicles</a>
+    <a href="history.html">🕘 Parking History</a>
     <a href="terms.html">⚖️ Terms of Service</a>
   </div>
 
@@ -171,7 +172,7 @@
 
     async function addVehicle() {
       const nick = document.getElementById("nick").value;
-      const plate = document.getElementById("plate").value.toUpperCase();
+      const plate = (document.getElementById("plate").value || "").trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
       
       if(!nick || !plate) {
         alert("Fill in all fields!");

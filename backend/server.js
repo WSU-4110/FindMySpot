@@ -42,6 +42,7 @@ app.get('/', (req, res) => {
       vehicles: {
         register: 'POST /api/vehicles/register/:token',
         getAll: 'GET /api/vehicles/:token',
+        history: 'GET /api/vehicles/:token/history',
         update: 'PUT /api/vehicles/:token/:vehicleId',
         delete: 'DELETE /api/vehicles/:token/:vehicleId'
       },
@@ -63,7 +64,12 @@ app.get('/', (req, res) => {
         spots: 'GET /api/parking/spots',
         available: 'GET /api/parking/spots/available',
         occupied: 'GET /api/parking/spots/occupied',
-        stats: 'GET /api/parking/stats'
+        stats: 'GET /api/parking/stats',
+        locate: 'GET /api/parking/locate/:plate',
+        directions: 'GET /api/parking/directions/:plate',
+        usageReport: 'GET /api/parking/reports/usage?hoursBack=24',
+        securityFlags: 'GET /api/parking/security/flags',
+        securityScan: 'POST /api/parking/security/scan?maxDurationHours=24'
       }
     }
   });

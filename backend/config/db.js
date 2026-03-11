@@ -56,6 +56,53 @@ async function initializeDatabase() {
       )
     `);
 
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS user_vehicles (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL,
+        license_plate VARCHAR(20) NOT NULL,
+        vehicle_name VARCHAR(255),
+        make_model VARCHAR(255),
+        color VARCHAR(50),
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+        UNIQUE(user_id, license_plate)
+      )
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS detected_plates (
+        id SERIAL PRIMARY KEY,
+        license_plate VARCHAR(20) NOT NULL,
+        floor INTEGER,
+        lot INTEGER,
+        location_description VARCHAR(255),
+        confidence FLOAT,
+        detected_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        camera_id VARCHAR(50),
+        latitude FLOAT,
+        longitude FLOAT
+      )
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS security_flags (
+        id SERIAL PRIMARY KEY,
+        session_id INTEGER,
+        vehicle_plate VARCHAR(20) NOT NULL,
+        flag_type VARCHAR(64) NOT NULL,
+        reason VARCHAR(500) NOT NULL,
+        status VARCHAR(20) NOT NULL DEFAULT 'OPEN',
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        resolved_at TIMESTAMP,
+        FOREIGN KEY (session_id) REFERENCES parking_sessions(id) ON DELETE SET NULL
+      )
+    `);
+
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_security_flags_status ON security_flags(status)');
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_security_flags_vehicle ON security_flags(vehicle_plate)');
+
     // Clear and reinitialize parking spots
     await pool.query('TRUNCATE TABLE parking_spots, parking_sessions CASCADE');
     
