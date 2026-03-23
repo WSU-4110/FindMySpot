@@ -131,6 +131,8 @@
     let latestDirectionPayload = null;
     let latestLocatedPlate = null;
     const BANNER_DISMISS_KEY = "fms_bannerDismissedNotificationId";
+    const LOCAL_VEHICLES_KEY = "fms_savedVehicles";
+    const LOCAL_HISTORY_KEY = "fms_parkingHistory";
 
     function toggleNav() {
       const nav = document.getElementById("mySidenav");
@@ -239,6 +241,108 @@
       catch{ return {}; }
     }
     function parkingSet(obj){ localStorage.setItem("fms_parking", JSON.stringify(obj)); }
+
+    function getLocalVehicles(){
+      try{
+        const parsed = JSON.parse(localStorage.getItem(LOCAL_VEHICLES_KEY) || "[]");
+        return Array.isArray(parsed) ? parsed : [];
+      }catch{
+        return [];
+      }
+    }
+
+    function setLocalVehicles(items){
+      localStorage.setItem(LOCAL_VEHICLES_KEY, JSON.stringify(items));
+    }
+
+    function upsertLocalVehicle(token, plate){
+      const normalizedPlate = normalizePlate(plate);
+      if(!normalizedPlate) return;
+
+      const vehicles = getLocalVehicles();
+      const existingIdx = vehicles.findIndex((item) => normalizePlate(item.license_plate) === normalizedPlate);
+      const payload = {
+        id: `local-${normalizedPlate}`,
+        token: token || "",
+        vehicle_name: normalizedPlate,
+        license_plate: normalizedPlate,
+        created_at: new Date().toISOString()
+      };
+
+      if(existingIdx >= 0){
+        vehicles[existingIdx] = { ...vehicles[existingIdx], ...payload };
+      }else{
+        vehicles.unshift(payload);
+      }
+
+      setLocalVehicles(vehicles);
+    }
+
+    function getLocalParkingHistory(){
+      try{
+        const parsed = JSON.parse(localStorage.getItem(LOCAL_HISTORY_KEY) || "[]");
+        return Array.isArray(parsed) ? parsed : [];
+      }catch{
+        return [];
+      }
+    }
+
+    function setLocalParkingHistory(items){
+      localStorage.setItem(LOCAL_HISTORY_KEY, JSON.stringify(items));
+    }
+
+    function appendLocalParkingHistory(token, plate, floor, lot){
+      const normalizedPlate = normalizePlate(plate);
+      if(!normalizedPlate) return;
+
+      const history = getLocalParkingHistory();
+      history.unshift({
+        source: "local",
+        token: token || "",
+        vehicle_name: normalizedPlate,
+        license_plate: normalizedPlate,
+        floor,
+        lot,
+        spot_number: `F${floor}-S${lot}`,
+        parking_area: `Floor ${floor}`,
+        check_in_time: new Date().toISOString(),
+        check_out_time: null
+      });
+
+      setLocalParkingHistory(history.slice(0, 500));
+    }
+
+    async function ensureVehicleRegistered(token, plate){
+      if(!plate) return;
+
+      upsertLocalVehicle(token, plate);
+
+      if(!token) return;
+
+      try{
+        const registerResponse = await fetch(`${API_BASE_URL}/api/vehicles`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            token,
+            licensePlate: plate,
+            vehicleName: plate
+          })
+        });
+
+        if(registerResponse.ok) return;
+
+        const registerData = await safeJson(registerResponse);
+        const message = String(registerData?.message || "").toLowerCase();
+        if(message.includes("already registered")) return;
+
+        console.warn("Vehicle auto-save failed:", registerData?.message || "Unknown error");
+      }catch(error){
+        console.warn("Vehicle auto-save request failed:", error);
+      }
+    }
     
     async function checkIn(){
       if(!currentUser()){
@@ -267,6 +371,15 @@
 
       setBusy("btnCheckin", true);
       try{
+        const token = currentUser();
+        await ensureVehicleRegistered(token, plate);
+        appendLocalParkingHistory(token, plate, floor, lot);
+
+        // Also save locally for quick lookup
+        const db = parkingGet();
+        db[plate] = { plate, floor, spot: lot, parkedSince: new Date().toISOString(), user: token };
+        parkingSet(db);
+
         const response = await fetch(`${API_BASE_URL}/api/detection/record`, {
           method: 'POST',
           headers: {
@@ -285,15 +398,10 @@
         const data = await safeJson(response);
 
         if(!response.ok){
-          msg.textContent = data.message || "Check-in failed";
+          msg.textContent = `Saved to My Vehicles & History, but check-in failed: ${data.message || "Unknown error"}`;
           msg.classList.remove("hidden"); msg.classList.add("err");
           return;
         }
-
-        // Also save locally for quick lookup
-        const db = parkingGet();
-        db[plate] = { plate, floor, spot: lot, parkedSince: new Date().toISOString(), user: currentUser() };
-        parkingSet(db);
 
         let statusMsg = `✓ Checked in ${plate}.`;
         if(data.parkingError){
@@ -302,7 +410,6 @@
         } else if(data.parkingSessionCreated){
           statusMsg = `✓ Checked in ${plate} to Floor ${floor}, Lot ${lot}.`;
           if(data.matched) statusMsg += ` Notification sent.`;
-          statusMsg += ` (Auto-releases in 10 min)`;
         }
         msg.textContent = statusMsg;
         msg.classList.remove("hidden"); 

@@ -6,6 +6,14 @@
   <title>FindMySpot - My Vehicles</title>
 
   <link rel="stylesheet" href="style.css">
+  <style>
+    .screen {
+      height: calc(100vh - 190px);
+      max-height: 720px;
+      overflow-y: scroll;
+      scrollbar-gutter: stable;
+    }
+  </style>
 </head>
 
 <body>
@@ -58,11 +66,117 @@
 
   <script>
     const API_BASE_URL = "http://localhost:3000";
+    const LOCAL_VEHICLES_KEY = "fms_savedVehicles";
     let notifPollHandle = null;
     const BANNER_DISMISS_KEY = "fms_bannerDismissedNotificationId";
     
     function currentUser() {
       return localStorage.getItem('fms_currentUser');
+    }
+
+    function normalizePlate(plate) {
+      return String(plate || "").trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
+    }
+
+    function getLocalVehicles() {
+      try {
+        const parsed = JSON.parse(localStorage.getItem(LOCAL_VEHICLES_KEY) || "[]");
+        return Array.isArray(parsed) ? parsed : [];
+      } catch {
+        return [];
+      }
+    }
+
+    function setLocalVehicles(items) {
+      localStorage.setItem(LOCAL_VEHICLES_KEY, JSON.stringify(items));
+    }
+
+    function getLocalVehiclesForToken(token) {
+      const all = getLocalVehicles();
+      if(!token) return all;
+      const filtered = all.filter((item) => !item.token || item.token === token);
+      return filtered.length > 0 ? filtered : all;
+    }
+
+    function getLocalHistoryVehiclesForToken(token) {
+      try {
+        const history = JSON.parse(localStorage.getItem("fms_parkingHistory") || "[]");
+        const items = Array.isArray(history) ? history : [];
+        const source = token
+          ? items.filter((item) => !item.token || item.token === token)
+          : items;
+
+        const map = new Map();
+        for(const item of source){
+          const plate = normalizePlate(item.license_plate || item.plate);
+          if(!plate || map.has(plate)) continue;
+          map.set(plate, {
+            id: `hist-${plate}`,
+            vehicle_name: item.vehicle_name || plate,
+            license_plate: plate,
+            created_at: item.check_in_time || new Date().toISOString()
+          });
+        }
+
+        return Array.from(map.values());
+      } catch {
+        return [];
+      }
+    }
+
+    function upsertLocalVehicle(token, plate, vehicleName) {
+      const normalized = normalizePlate(plate);
+      if (!token || !normalized) return;
+
+      const vehicles = getLocalVehicles();
+      const idx = vehicles.findIndex((item) => item.token === token && normalizePlate(item.license_plate) === normalized);
+      const payload = {
+        id: idx >= 0 ? vehicles[idx].id : `local-${normalized}`,
+        token,
+        vehicle_name: vehicleName || normalized,
+        license_plate: normalized,
+        created_at: new Date().toISOString()
+      };
+
+      if (idx >= 0) {
+        vehicles[idx] = { ...vehicles[idx], ...payload };
+      } else {
+        vehicles.unshift(payload);
+      }
+
+      setLocalVehicles(vehicles);
+    }
+
+    function removeLocalVehicle(token, plate) {
+      const normalized = normalizePlate(plate);
+      if (!normalized) return;
+      const next = getLocalVehicles().filter((item) => {
+        const samePlate = normalizePlate(item.license_plate) === normalized;
+        const sameUser = token ? (!item.token || item.token === token) : true;
+        return !(samePlate && sameUser);
+      });
+      setLocalVehicles(next);
+    }
+
+    function mergeVehicles(backendVehicles, localVehicles) {
+      const merged = [];
+      const seen = new Set();
+
+      for (const item of [...(backendVehicles || []), ...(localVehicles || [])]) {
+        const key = normalizePlate(item.license_plate);
+        if (!key || seen.has(key)) continue;
+        seen.add(key);
+        merged.push(item);
+      }
+
+      return merged;
+    }
+
+    function isRecentlySaved(timestamp) {
+      if(!timestamp) return false;
+      const time = new Date(timestamp).getTime();
+      if(Number.isNaN(time)) return false;
+      return (Date.now() - time) <= 5 * 60 * 1000;
     }
 
     function logout() {
@@ -136,16 +250,21 @@
         return;
       }
 
+      const localVehicles = mergeVehicles(getLocalVehiclesForToken(token), getLocalHistoryVehiclesForToken(token));
+
       try {
         const response = await fetch(`${API_BASE_URL}/api/vehicles/${token}`);
         const data = await response.json();
         
         if(response.ok && data.data) {
-          renderVehicles(data.data);
+          renderVehicles(mergeVehicles(data.data, localVehicles));
+          return;
         }
+
+        renderVehicles(localVehicles);
       } catch(error) {
         console.error("Error loading vehicles:", error);
-        renderVehicles([]);
+        renderVehicles(localVehicles);
       }
     }
 
@@ -155,15 +274,18 @@
         '<div style="text-align:center; padding: 20px; font-size: 13px; color: var(--muted);">No vehicles registered yet.</div>' : '';
       
       vehicles.forEach((v) => {
+        const recentTag = isRecentlySaved(v.created_at)
+          ? '<span style="font-size: 11px; color: var(--muted); margin-left: 8px; font-weight: 800;">JUST SAVED</span>'
+          : '';
         container.innerHTML += `
           <div class="vehicle-item">
             <div class="vehicle-info">
-              <h2>${v.vehicle_name}</h2>
+              <h2>${v.vehicle_name}${recentTag}</h2>
               <p>PLATE: ${v.license_plate}</p>
             </div>
             <div style="display:flex; align-items:center; gap:10px;">
               <div class="plate-badge">${v.license_plate}</div>
-              <button class="delete-btn" onclick="removeVehicle(${v.id})">×</button>
+              <button class="delete-btn" onclick="removeVehicle('${String(v.id)}', '${v.license_plate}')">×</button>
             </div>
           </div>
         `;
@@ -172,7 +294,7 @@
 
     async function addVehicle() {
       const nick = document.getElementById("nick").value;
-      const plate = (document.getElementById("plate").value || "").trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
+      const plate = normalizePlate(document.getElementById("plate").value);
       
       if(!nick || !plate) {
         alert("Fill in all fields!");
@@ -201,6 +323,7 @@
         const data = await response.json();
         
         if(response.ok) {
+          upsertLocalVehicle(token, plate, nick);
           document.getElementById("nick").value = "";
           document.getElementById("plate").value = "";
           alert("Vehicle registered successfully!");
@@ -214,10 +337,19 @@
       }
     }
 
-    async function removeVehicle(vehicleId) {
+    async function removeVehicle(vehicleId, licensePlate) {
       if(!confirm("Remove this vehicle?")) return;
 
       const token = currentUser();
+      const isBackendId = /^\d+$/.test(String(vehicleId || ""));
+
+      if(!isBackendId) {
+        removeLocalVehicle(token, licensePlate);
+        alert("Vehicle removed!");
+        loadVehicles();
+        return;
+      }
+
       try {
         const response = await fetch(`${API_BASE_URL}/api/vehicles/${vehicleId}`, {
           method: "DELETE",
@@ -228,6 +360,7 @@
         });
 
         if(response.ok) {
+          removeLocalVehicle(token, licensePlate);
           alert("Vehicle removed!");
           loadVehicles();
         } else {
