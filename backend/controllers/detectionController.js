@@ -322,6 +322,12 @@ class DetectionController {
       });
     }
   }
+
+  // BUG FIX (helper method): Restore auto-checkout timer for a vehicle (called on server startup)
+  // Re-populates the in-memory timer map when server restarts, allowing active sessions to be tracked
+  static restoreTimer(licensePlate, timerId) {
+    autoCheckoutTimers[licensePlate] = timerId;
+  }
 }
 
 module.exports = DetectionController;

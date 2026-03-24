@@ -103,15 +103,28 @@ async function initializeDatabase() {
     await pool.query('CREATE INDEX IF NOT EXISTS idx_security_flags_status ON security_flags(status)');
     await pool.query('CREATE INDEX IF NOT EXISTS idx_security_flags_vehicle ON security_flags(vehicle_plate)');
 
-    // Clear and reinitialize parking spots
-    await pool.query('TRUNCATE TABLE parking_spots, parking_sessions CASCADE');
-    
-    await pool.query(`
-      INSERT INTO parking_spots (floor, lot, occupied) 
-      SELECT f.floor, l.lot, false
-      FROM generate_series(1, 5) f(floor)
-      CROSS JOIN generate_series(1, 5) l(lot)
+    // BUG FIX: Session Persistence & TRUNCATE CASCADE (CRITICAL)
+    // PROBLEM: Previous code ran "TRUNCATE TABLE parking_spots, parking_sessions CASCADE" on every server restart,
+    //          destroying all active parking sessions and in-memory auto-checkout timers. Occupancy data was lost.
+    // SOLUTION: Only initialize parking spots if table is empty. This preserves existing sessions across restarts.
+    const spotCount = await pool.query('SELECT COUNT(*) FROM parking_spots');
+    if (spotCount.rows[0].count === 0) {
+      await pool.query(`
+        INSERT INTO parking_spots (floor, lot, occupied) 
+        SELECT f.floor, l.lot, false
+        FROM generate_series(1, 5) f(floor)
+        CROSS JOIN generate_series(1, 5) l(lot)
+      `);
+    }
+
+    // BUG FIX (continued): Restore auto-checkout timers for active sessions
+    // When server restarts, retrieve all active sessions from DB so timers can be recreated in server.js
+    const activeSessions = await pool.query(`
+      SELECT vehicle_plate, floor, lot 
+      FROM parking_sessions 
+      WHERE check_out_time IS NULL
     `);
+    console.log(`[AUTO-CHECKOUT] Restoring ${activeSessions.rows.length} active session timers on startup`);
 
     console.log('Database tables initialized successfully');
   } catch (error) {

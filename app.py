@@ -3,6 +3,8 @@ import re
 import time
 import random
 import requests
+import json
+import os
 from collections import Counter, deque
 
 import easyocr
@@ -10,12 +12,42 @@ import easyocr
 # Initialize EasyOCR reader
 reader = easyocr.Reader(['en'], gpu=False)
 
+# BUG FIX #1: Camera Hardcoding (HIGH) & BUG FIX #2: Random Floor/Lot Assignment (CRITICAL)
+# PROBLEM #1: cv2.VideoCapture(0) was hardcoded, so all deployments used the same camera
+#             even though camera_config.json had 10 cameras mapped to specific floors/lots.
+# PROBLEM #2: assigned_floor/lot were randomly assigned (1-5) on each detection,
+#             instead of being read from camera_config.json based on deployment location.
+#
+# SOLUTION: Load camera config at startup, get CAMERA_ID from environment variable,
+#           extract floor/lot for that camera, and use them for all detections.
+
+# Load camera configuration
+def load_camera_config():
+    """Load camera configuration from camera_config.json"""
+    config_path = os.path.join(os.path.dirname(__file__), 'camera_config.json')
+    try:
+        with open(config_path, 'r') as f:
+            config = json.load(f)
+            return config
+    except FileNotFoundError:
+        print(f"Error: camera_config.json not found at {config_path}", flush=True)
+        return None
+    except json.JSONDecodeError:
+        print(f"Error: Failed to parse camera_config.json", flush=True)
+        return None
+
 # Backend API configuration
 BACKEND_API_URL = "http://localhost:3000/api/detection/record"
 
-# Variables for random floor/lot assignment
+# Get camera ID from environment variable (e.g., 'set CAMERA_ID=3' for Floor 2, Lot 2)
+# Default to 0 if not set
+CAMERA_ID = int(os.environ.get('CAMERA_ID', '0'))
+CAMERA_CONFIG = load_camera_config()
+
+# FIXED: These are now loaded from camera_config.json instead of being randomly assigned
 assigned_floor = None
 assigned_lot = None
+camera_name = None
 
 last_printed_plate = ""
 last_ocr_time = 0.0
@@ -148,11 +180,11 @@ def send_parking_checkin(plate, floor, lot):
             "lot": lot,
             "location": f"Floor {floor}, Lot {lot}",
             "confidence": 0.98,
-            "cameraId": "CAM_LOCAL"
+            "cameraId": f"CAM_{CAMERA_ID}"  # FIXED: Dynamic camera ID instead of hardcoded
         }
         response = requests.post(BACKEND_API_URL, json=payload, timeout=5)
         if response.status_code == 201:
-            print(f"✓ Sent to backend: {plate} -> Floor {floor}, Lot {lot}", flush=True)
+            print(f"✓ Sent to backend: {plate} -> Floor {floor}, Lot {lot} (Camera {CAMERA_ID})", flush=True)
         else:
             print(f"✗ Backend error: {response.status_code}", flush=True)
     except Exception as e:
@@ -182,12 +214,35 @@ def find_plate_candidates(gray_frame):
 
     return candidates
 
-# Open webcam
-cap = cv2.VideoCapture(0)
+# FIXED: Initialize camera configuration and floor/lot from config file
+if CAMERA_CONFIG:
+    cameras = CAMERA_CONFIG.get('cameras', [])
+    matching_camera = None
+    for cam in cameras:
+        if cam.get('camera_id') == CAMERA_ID:
+            matching_camera = cam
+            break
+    
+    if matching_camera:
+        assigned_floor = matching_camera.get('floor')
+        assigned_lot = matching_camera.get('lot')
+        camera_name = matching_camera.get('name', f'Camera {CAMERA_ID}')
+        print(f"✓ Loaded camera config: {camera_name} -> Floor {assigned_floor}, Lot {assigned_lot}", flush=True)
+    else:
+        print(f"✗ Camera ID {CAMERA_ID} not found in camera_config.json. Available cameras: {[c.get('camera_id') for c in cameras]}", flush=True)
+else:
+    print("✗ Failed to load camera configuration. Using Camera 0.", flush=True)
+
+# FIXED: Open camera using CAMERA_ID from environment instead of hardcoded 0
+cap = cv2.VideoCapture(CAMERA_ID)
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 
-print("Camera opened. Press 'q' to quit.")
+if not cap.isOpened():
+    print(f"✗ Failed to open camera {CAMERA_ID}. Make sure it's connected and not in use.", flush=True)
+    exit(1)
+
+print(f"✓ Camera {CAMERA_ID} ({camera_name}) opened. Press 'q' to quit.")
 
 while True:
     ret, frame = cap.read()
@@ -257,9 +312,9 @@ while True:
                     final_plate = consensus_plate
                     finalized_at = current_time
                     
-                    # Randomly assign floor (1-5) and lot (1-5)
-                    assigned_floor = random.randint(1, 5)
-                    assigned_lot = random.randint(1, 5)
+                    # FIXED: Use floor and lot from camera configuration (loaded at startup)
+                    # REMOVED: random.randint(1, 5) calls that caused wrong floor/lot assignments
+                    # These values are now deterministic and based on camera location
                     
                     timestamp = time.strftime("%H:%M:%S")
                     print(
