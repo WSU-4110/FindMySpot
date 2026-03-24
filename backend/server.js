@@ -6,7 +6,8 @@ const userRoutes = require('./routes/userRoutes');
 const vehicleRoutes = require('./routes/vehicleRoutes');
 const detectionRoutes = require('./routes/detectionRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
-const { initializeDatabase } = require('./config/db');
+const { initializeDatabase, pool } = require('./config/db');
+const DetectionController = require('./controllers/detectionController');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -97,6 +98,42 @@ app.use((req, res) => {
 async function startServer() {
   try {
     await initializeDatabase();
+    
+    // BUG FIX (continued): Restore auto-checkout timers for active sessions on startup
+    // Re-establish in-memory timers for sessions that survived the database initialization
+    // This ensures vehicles don't get stuck in parking state if server restarts mid-session
+    try {
+      const activeSessions = await pool.query(`
+        SELECT vehicle_plate, EXTRACT(EPOCH FROM (NOW() - check_in_time)) as elapsed_seconds
+        FROM parking_sessions 
+        WHERE check_out_time IS NULL
+      `);
+      
+      for (const session of activeSessions.rows) {
+        const plate = session.vehicle_plate;
+        const elapsedSeconds = Math.floor(session.elapsed_seconds);
+        const remainingMs = Math.max(1000, (10 * 60 * 1000) - (elapsedSeconds * 1000)); // 10 min total
+        
+        console.log(`[STARTUP] Restoring auto-checkout timer for ${plate} (${remainingMs / 1000}s remaining)`);
+        
+        // Schedule auto-checkout for the remaining time
+        const timerId = setTimeout(async () => {
+          try {
+            const { ParkingSession } = require('./models/parking');
+            await ParkingSession.checkout(plate);
+            console.log(`[AUTO-CHECKOUT] Vehicle ${plate} auto-checked out after restart recovery`);
+          } catch (error) {
+            console.error(`[AUTO-CHECKOUT] Failed to auto-checkout ${plate}: ${error.message}`);
+          }
+        }, remainingMs);
+        
+        // Store timer reference (piggyback on DetectionController's internal timers)
+        DetectionController.restoreTimer(plate, timerId);
+      }
+    } catch (error) {
+      console.error('[STARTUP] Warning: Failed to restore auto-checkout timers:', error.message);
+    }
+    
     app.listen(PORT, () => {
       console.log(`FindMySpot API server running on port ${PORT}`);
       console.log(`Visit http://localhost:${PORT} for API documentation`);
