@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>FindMySpot - Create Account</title>
-  
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -15,14 +14,12 @@
         <div class="brand">FindMy<span class="spot">Spot</span></div>
       </div>
     </div>
-
     <!-- SIGNUP SCREEN-->
     <div class="screen">
       <div class="authTop">
         <div style="font-size:54px; filter: drop-shadow(0 10px 18px rgba(0,0,0,.10));"></div>
         <div class="appName">Create Account</div>
       </div>
-
       <div class="form">
         <label class="label">Full Name</label>
         <input id="suName" class="input" placeholder="Your name" type="text" />
@@ -36,58 +33,62 @@
         <a href="login.html" class="btnGhost">Back to Sign In</a>
         <div id="signupMsg" class="toast hidden"></div>
       </div>
-
       <div class="footerNote">We don't share your information.</div>
     </div>
   </div>
-
+  <script src="AuthState.js"></script>
   <script>
     const API_BASE_URL = "http://localhost:3000";
-
-    function currentUser(){ return localStorage.getItem("fms_currentUser") || ""; }
-    function setCurrentUser(token){ 
-      if(token) localStorage.setItem("fms_currentUser", token);
+    const SignUpPage = {
+      currentState: new IdleState(),
+      setState(state) {
+        this.currentState = state;
+        this.currentState.render(this, "signupMsg");
+      },
+      toast(elId, text, type) {
+        const el = document.getElementById(elId);
+        el.textContent = text;
+        el.classList.remove("hidden", "ok", "err");
+        if (type === "ok") el.classList.add("ok");
+        if (type === "err") el.classList.add("err");
+      }
+    };
+    function currentUser() {
+      return localStorage.getItem("fms_currentUser") || "";
+    }
+    function setCurrentUser(token) {
+      if (token) localStorage.setItem("fms_currentUser", token);
       else localStorage.removeItem("fms_currentUser");
     }
-    function getUserName(){ return localStorage.getItem("fms_userName") || ""; }
-    function setUserName(name){ localStorage.setItem("fms_userName", name); }
-
-    function toast(elId, text, type){
-      const el = document.getElementById(elId);
-      el.textContent = text;
-      el.classList.remove("hidden","ok","err");
-      if(type === "ok") el.classList.add("ok");
-      if(type === "err") el.classList.add("err");
+    function getUserName() {
+      return localStorage.getItem("fms_userName") || "";
     }
-
-
-    async function doSignup(){
-      const signupMsg = document.getElementById("signupMsg");
-      signupMsg.classList.add("hidden");
-      
+    function setUserName(name) {
+      localStorage.setItem("fms_userName", name);
+    }
+    async function doSignup() {
       const name = (document.getElementById("suName").value || "").trim();
       const email = (document.getElementById("suEmail").value || "").trim().toLowerCase();
       const pw1 = document.getElementById("suPass").value || "";
       const pw2 = document.getElementById("suPass2").value || "";
-      
-      if(!name || !email || !pw1 || !pw2){
-        toast("signupMsg", "Please fill in all fields.", "err");
+      if (!name || !email || !pw1 || !pw2) {
+        SignUpPage.setState(new ErrorState("Please fill in all fields."));
         return;
       }
-      if(pw1.length < 6){
-        toast("signupMsg", "Password must be at least 6 characters.", "err");
+      if (pw1.length < 6) {
+        SignUpPage.setState(new ErrorState("Password must be at least 6 characters."));
         return;
       }
-      if(pw1 !== pw2){
-        toast("signupMsg", "Passwords do not match.", "err");
+      if (pw1 !== pw2) {
+        SignUpPage.setState(new ErrorState("Passwords do not match."));
         return;
       }
-
+      SignUpPage.setState(new LoadingScreen());
       try {
         const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
-          method: 'POST',
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json'
+            "Content-Type": "application/json"
           },
           body: JSON.stringify({
             name: name,
@@ -95,31 +96,26 @@
             password: pw1
           })
         });
-
         const data = await response.json();
-
-        if(!response.ok){
-          toast("signupMsg", data.message || "Registration failed", "err");
+        if (!response.ok) {
+          SignUpPage.setState(new ErrorState(data.message || "Registration failed"));
           return;
         }
-
         setCurrentUser(data.data.token);
         setUserName(data.data.name);
-        toast("signupMsg", "Account created! Signing you in...", "ok");
-        
+        SignUpPage.setState(new SuccessState("Account created! Signing you in..."));
         setTimeout(() => {
           window.location.href = "index.html";
         }, 800);
-      } catch(error) {
+      } catch (error) {
         console.error("Signup error:", error);
-        toast("signupMsg", "Connection error. Make sure backend is running.", "err");
+        SignUpPage.setState(new ErrorState("Connection error. Make sure backend is running."));
       }
     }
-
-    // Check if user is already logged in
-    if(currentUser()){
+    if (currentUser()) {
       window.location.href = "index.html";
     }
+    SignUpPage.setState(new IdleState());
   </script>
 </body>
 </html>
