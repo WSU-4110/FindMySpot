@@ -108,13 +108,18 @@ class PlateDatabase:
             if confidence < 0 or confidence > 1:
                 raise ValueError(f"confidence {confidence} must be between 0 and 1")
     
-    def _validate_camera_id(self, camera_id: str):
+    def _validate_camera_id(self, camera_id):
         """Validate camera ID"""
-        if not camera_id or len(camera_id) == 0:
-            raise ValueError("camera_id cannot be empty")
+        if camera_id is None:
+            raise ValueError("camera_id cannot be None")
         
-        if len(camera_id) > 50:
-            raise ValueError(f"camera_id too long (max 50 characters)")
+        # If your DB uses Integers, ensure it's an int
+        if not isinstance(camera_id, int):
+            try:
+                # Try to see if it's a string that looks like a number
+                int(camera_id)
+            except (ValueError, TypeError):
+                raise TypeError(f"camera_id must be an integer, got {type(camera_id)}")
     
     def save_plate(self, 
                    plate_number: str, 
@@ -139,17 +144,17 @@ class PlateDatabase:
             ValueError: If input validation fails
             psycopg2.Error: If database operation fails
         """
-        # Validate inputs
+
+        # 1. Validate inputs
         self._validate_plate_number(plate_number)
         self._validate_confidence(confidence)
-        self._validate_camera_id(camera_id)
         
         self.ensure_connection()
         
         if detected_at is None:
             detected_at = datetime.now()
         
-        # Check for recent duplicate
+        # 2. Setup Deduplication Query
         dedup_query = """
             SELECT id, detected_at 
             FROM detected_plates
@@ -161,23 +166,20 @@ class PlateDatabase:
         """
         
         cutoff_time = detected_at - timedelta(seconds=dedup_window_seconds)
-        
+
         try:
             with self.conn.cursor() as cur:
-                # Check if this plate was recently detected
+                # Check for recent duplicate
                 cur.execute(dedup_query, (plate_number, camera_id, cutoff_time))
                 recent_detection = cur.fetchone()
                 
                 if recent_detection:
                     recent_id, recent_time = recent_detection
                     seconds_ago = (detected_at - recent_time).total_seconds()
-                    logger.info(
-                        f"Skipping duplicate plate '{plate_number}' "
-                        f"(detected {seconds_ago:.1f}s ago, ID: {recent_id})"
-                    )
-                    return None  # Don't save duplicate
+                    logger.info(f"Skipping duplicate plate '{plate_number}' ({seconds_ago:.1f}s ago)")
+                    return None
                 
-                # No recent detection - save new record
+                # 3. Save new record
                 insert_query = """
                     INSERT INTO detected_plates (plate_number, detected_at, confidence, camera_id)
                     VALUES (%s, %s, %s, %s)
@@ -187,10 +189,7 @@ class PlateDatabase:
                 plate_id = cur.fetchone()[0]
                 self.conn.commit()
                 
-                logger.info(
-                    f"Saved plate '{plate_number}' to database "
-                    f"(ID: {plate_id}, confidence: {confidence:.2f if confidence else 'N/A'})"
-                )
+                logger.info(f"Saved plate '{plate_number}' (ID: {plate_id})")
                 return plate_id
                 
         except psycopg2.Error as e:
@@ -559,6 +558,17 @@ if __name__ == "__main__":
     try:
         # Test with context manager
         with PlateDatabase() as db:
+
+            print("\n0. Ensuring test camera exists...")
+            with db.conn.cursor() as cur:
+                # This adds Camera ID 1 if it doesn't already exist
+                cur.execute("""
+                    INSERT INTO cameras (id, name, location)
+                    VALUES (1, 'Main Entrance', 'Front Gate')
+                    ON CONFLICT (id) DO NOTHING;
+                """)
+                db.conn.commit()
+
             print("\n1. Testing connection info:")
             info = db.get_connection_info()
             print(f"   Connected to: {info['database']} at {info['host']}:{info['port']}")
@@ -566,13 +576,13 @@ if __name__ == "__main__":
             
             print("\n2. Testing plate save with validation:")
             # This should work
-            plate_id = db.save_plate("ABC123", confidence=0.95, camera_id="webcam_0")
+            plate_id = db.save_plate("ABC123", confidence=0.95, camera_id=1)
             if plate_id:
                 print(f"   ✓ Saved plate (ID: {plate_id})")
             
             print("\n3. Testing deduplication (saving same plate immediately):")
             # This should be skipped (duplicate)
-            duplicate_id = db.save_plate("ABC123", confidence=0.92, camera_id="webcam_0")
+            duplicate_id = db.save_plate("ABC123", confidence=0.92, camera_id=1)
             if duplicate_id is None:
                 print("   ✓ Duplicate correctly skipped")
             
