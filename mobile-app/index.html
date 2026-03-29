@@ -1,179 +1,4 @@
 <!DOCTYPE html>
-<<<<<<< HEAD
-<html>
-<head>
-    <title>License Plate Detection</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            margin: 0;
-            background-color: #f0f0f0;
-        }
-        h1 {
-            color: #333;
-        }
-        #video {
-            max-width: 90%;
-            max-height: 80vh;
-            border: 2px solid #333;
-            border-radius: 8px;
-            margin: 20px 0;
-            background-color: #ddd;
-        }
-        button {
-            padding: 10px 20px;
-            font-size: 16px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            margin: 10px;
-        }
-        button:hover {
-            background-color: #45a049;
-        }
-        button:disabled {
-            background-color: #ccc;
-            cursor: not-allowed;
-        }
-        #status {
-            font-size: 18px;
-            margin: 10px;
-            font-weight: bold;
-        }
-        .success {
-            color: green;
-        }
-        .error {
-            color: red;
-        }
-        .info {
-            color: blue;
-        }
-        #plateDisplay {
-            font-size: 24px;
-            font-weight: bold;
-            color: #4CAF50;
-            margin: 20px;
-            padding: 15px;
-            border: 3px solid #4CAF50;
-            border-radius: 8px;
-            background-color: white;
-            min-width: 200px;
-            text-align: center;
-        }
-    </style>
-</head>
-<body>
-    <h1>License Plate Detection - Webcam</h1>
-    <div id="status" class="info">Connecting to backend...</div>
-    <img id="video" alt="Webcam Stream" />
-    <div id="plateDisplay" style="display: none;">
-        <div>Detected Plate:</div>
-        <div id="plateText">-</div>
-    </div>
-    <div>
-        <button id="testBtn" onclick="testConnection()">Test Backend Connection</button>
-        <button id="resetBtn" onclick="resetDetection()" style="background-color: #ff9800;">Reset Detection</button>
-    </div>
-    <p id="result"></p>
-
-    <script>
-        const videoElement = document.getElementById('video');
-        const statusElement = document.getElementById('status');
-        const resultElement = document.getElementById('result');
-        const plateDisplay = document.getElementById('plateDisplay');
-        const plateText = document.getElementById('plateText');
-        const testBtn = document.getElementById('testBtn');
-
-        // Test backend connection on load
-        async function testConnection() {
-            try {
-                testBtn.disabled = true;
-                resultElement.innerText = 'Testing...';
-                const response = await fetch('http://localhost:5000/api/hello');
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}`);
-                }
-                
-                const data = await response.json();
-                resultElement.innerText = `✓ ${data.message}`;
-                resultElement.style.color = 'green';
-                statusElement.innerText = 'Backend connected! Loading webcam...';
-                statusElement.className = 'success';
-                
-                // Start video stream
-                videoElement.src = 'http://localhost:5000/api/video';
-                videoElement.onerror = function() {
-                    statusElement.innerText = 'Error loading video stream';
-                    statusElement.className = 'error';
-                };
-                videoElement.onload = function() {
-                    statusElement.innerText = 'Webcam stream active';
-                    statusElement.className = 'success';
-                };
-                
-                // Poll for detected plates
-                startPlatePolling();
-                
-            } catch (error) {
-                resultElement.innerText = `✗ Connection failed: ${error.message}`;
-                resultElement.style.color = 'red';
-                statusElement.innerText = 'Cannot connect to backend. Is Flask running?';
-                statusElement.className = 'error';
-            } finally {
-                testBtn.disabled = false;
-            }
-        }
-
-        // Poll for detected license plates
-        function startPlatePolling() {
-            setInterval(async () => {
-                try {
-                    const response = await fetch('http://localhost:5000/api/plate');
-                    const data = await response.json();
-                    
-                    if (data.plate) {
-                        plateDisplay.style.display = 'block';
-                        plateText.innerText = data.plate;
-                    }
-                } catch (error) {
-                    console.error('Error polling plate:', error);
-                }
-            }, 1000); // Poll every second
-        }
-
-        // Auto-test connection on page load
-        window.onload = function() {
-            setTimeout(testConnection, 500);
-        };
-
-        // Reset detection function
-        async function resetDetection() {
-            try {
-                const response = await fetch('http://localhost:5000/api/reset', {
-                    method: 'POST'
-                });
-                const data = await response.json();
-                
-                plateDisplay.style.display = 'none';
-                plateText.innerText = '-';
-                resultElement.innerText = '✓ ' + data.message;
-                resultElement.style.color = 'green';
-            } catch (error) {
-                resultElement.innerText = '✗ Reset failed: ' + error.message;
-                resultElement.style.color = 'red';
-            }
-        }
-    </script>
-=======
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -301,7 +126,7 @@
   </div><!-- /.phone -->
 
   <script>
-    const API_BASE_URL = "http://localhost:3000";
+    const API_BASE_URL = "http://localhost:5000";
     let notifPollHandle = null;
     let latestDirectionPayload = null;
     let latestLocatedPlate = null;
@@ -555,7 +380,7 @@
         db[plate] = { plate, floor, spot: lot, parkedSince: new Date().toISOString(), user: token };
         parkingSet(db);
 
-        const response = await fetch(`${API_BASE_URL}/api/detection/record`, {
+        const response = await fetch(`${API_BASE_URL}/api/vehicle/checkin`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -616,7 +441,7 @@
       showOnly("viewLoading");
 
       try{
-        const response = await fetch(`${API_BASE_URL}/api/parking/locate/${plate}`, {
+        const response = await fetch(`${API_BASE_URL}/api/vehicle/find/${encodeURIComponent(plate)}`, {
           headers: {
             'Authorization': `Bearer ${currentUser()}`
           }
@@ -818,6 +643,5 @@
     renderAuthUI();
   </script>
 
->>>>>>> 627f34b4a5a377d5893fe0859662745e07e6619b
 </body>
 </html>

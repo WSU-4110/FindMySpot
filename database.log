@@ -1,0 +1,116 @@
+2026-03-27 09:26:21,743 - __main__ - INFO - Connected to PostgreSQL database: license_plate_db
+2026-03-27 09:26:21,746 - __main__ - ERROR - Failed to save plate 'ABC123': invalid input syntax for type integer: "webcam_0"
+LINE 5:             AND camera_id = 'webcam_0'
+                                    ^
+
+2026-03-27 09:26:21,747 - __main__ - INFO - Database connection closed
+2026-03-27 09:26:21,747 - __main__ - ERROR - Test suite failed
+Traceback (most recent call last):
+  File "C:\Users\varun\FindMySpot\database.py", line 569, in <module>
+    plate_id = db.save_plate("ABC123", confidence=0.95, camera_id="webcam_0")
+  File "C:\Users\varun\FindMySpot\database.py", line 168, in save_plate
+    cur.execute(dedup_query, (plate_number, camera_id, cutoff_time))
+    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+psycopg2.errors.InvalidTextRepresentation: invalid input syntax for type integer: "webcam_0"
+LINE 5:             AND camera_id = 'webcam_0'
+                                    ^
+
+2026-03-27 09:50:39,806 - __main__ - INFO - Connected to PostgreSQL database: license_plate_db
+2026-03-27 09:50:39,888 - __main__ - ERROR - Failed to save plate 'ABC123': insert or update on table "detected_plates" violates foreign key constraint "detected_plates_camera_id_fkey"
+DETAIL:  Key (camera_id)=(1) is not present in table "cameras".
+
+2026-03-27 09:50:39,888 - __main__ - INFO - Database connection closed
+2026-03-27 09:50:39,890 - __main__ - ERROR - Test suite failed
+Traceback (most recent call last):
+  File "c:\Users\varun\FindMySpot\database.py", line 563, in <module>
+    plate_id = db.save_plate("ABC123", confidence=0.95, camera_id=1)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\varun\FindMySpot\database.py", line 183, in save_plate
+    cur.execute(insert_query, (plate_number, detected_at, confidence, camera_id))
+psycopg2.errors.ForeignKeyViolation: insert or update on table "detected_plates" violates foreign key constraint "detected_plates_camera_id_fkey"
+DETAIL:  Key (camera_id)=(1) is not present in table "cameras".
+
+2026-03-27 09:50:48,646 - __main__ - INFO - Connected to PostgreSQL database: license_plate_db
+2026-03-27 09:50:48,653 - __main__ - ERROR - Failed to save plate 'ABC123': insert or update on table "detected_plates" violates foreign key constraint "detected_plates_camera_id_fkey"
+DETAIL:  Key (camera_id)=(1) is not present in table "cameras".
+
+2026-03-27 09:50:48,653 - __main__ - INFO - Database connection closed
+2026-03-27 09:50:48,653 - __main__ - ERROR - Test suite failed
+Traceback (most recent call last):
+  File "C:\Users\varun\FindMySpot\database.py", line 563, in <module>
+    plate_id = db.save_plate("ABC123", confidence=0.95, camera_id=1)
+  File "C:\Users\varun\FindMySpot\database.py", line 183, in save_plate
+    cur.execute(insert_query, (plate_number, detected_at, confidence, camera_id))
+    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+psycopg2.errors.ForeignKeyViolation: insert or update on table "detected_plates" violates foreign key constraint "detected_plates_camera_id_fkey"
+DETAIL:  Key (camera_id)=(1) is not present in table "cameras".
+
+2026-03-27 09:53:17,642 - __main__ - INFO - Connected to PostgreSQL database: license_plate_db
+2026-03-27 09:53:17,647 - __main__ - INFO - Database connection closed
+2026-03-27 09:53:17,647 - __main__ - ERROR - Test suite failed
+Traceback (most recent call last):
+  File "c:\Users\varun\FindMySpot\database.py", line 560, in <module>
+    cur.execute("""
+psycopg2.errors.UndefinedColumn: column "camera_name" of relation "cameras" does not exist
+LINE 2:                     INSERT INTO cameras (id, camera_name, lo...
+                                                     ^
+
+2026-03-27 09:53:25,424 - __main__ - INFO - Connected to PostgreSQL database: license_plate_db
+2026-03-27 09:53:25,425 - __main__ - INFO - Database connection closed
+2026-03-27 09:53:25,425 - __main__ - ERROR - Test suite failed
+Traceback (most recent call last):
+  File "C:\Users\varun\FindMySpot\database.py", line 560, in <module>
+    cur.execute("""
+    ~~~~~~~~~~~^^^^
+        INSERT INTO cameras (id, camera_name, location)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        VALUES (1, 'Main Entrance', 'Front Gate')
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        ON CONFLICT (id) DO NOTHING;
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    """)
+    ^^^^
+psycopg2.errors.UndefinedColumn: column "camera_name" of relation "cameras" does not exist
+LINE 2:                     INSERT INTO cameras (id, camera_name, lo...
+                                                     ^
+
+2026-03-27 09:54:49,553 - __main__ - INFO - Connected to PostgreSQL database: license_plate_db
+2026-03-27 09:54:49,564 - __main__ - INFO - Saved plate 'ABC123' (ID: 3)
+2026-03-27 09:54:49,566 - __main__ - ERROR - Failed to save plate 'ABC123': invalid input syntax for type integer: "webcam_0"
+LINE 5:             AND camera_id = 'webcam_0'
+                                    ^
+
+2026-03-27 09:54:49,567 - __main__ - INFO - Database connection closed
+2026-03-27 09:54:49,567 - __main__ - ERROR - Test suite failed
+Traceback (most recent call last):
+  File "c:\Users\varun\FindMySpot\database.py", line 580, in <module>
+    duplicate_id = db.save_plate("ABC123", confidence=0.92, camera_id="webcam_0")
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\varun\FindMySpot\database.py", line 168, in save_plate
+    cur.execute(dedup_query, (plate_number, camera_id, cutoff_time))
+psycopg2.errors.InvalidTextRepresentation: invalid input syntax for type integer: "webcam_0"
+LINE 5:             AND camera_id = 'webcam_0'
+                                    ^
+
+2026-03-27 09:54:56,396 - __main__ - INFO - Connected to PostgreSQL database: license_plate_db
+2026-03-27 09:54:56,401 - __main__ - INFO - Skipping duplicate plate 'ABC123' (6.8s ago)
+2026-03-27 09:54:56,402 - __main__ - ERROR - Failed to save plate 'ABC123': invalid input syntax for type integer: "webcam_0"
+LINE 5:             AND camera_id = 'webcam_0'
+                                    ^
+
+2026-03-27 09:54:56,402 - __main__ - INFO - Database connection closed
+2026-03-27 09:54:56,403 - __main__ - ERROR - Test suite failed
+Traceback (most recent call last):
+  File "C:\Users\varun\FindMySpot\database.py", line 580, in <module>
+    duplicate_id = db.save_plate("ABC123", confidence=0.92, camera_id="webcam_0")
+  File "C:\Users\varun\FindMySpot\database.py", line 168, in save_plate
+    cur.execute(dedup_query, (plate_number, camera_id, cutoff_time))
+    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+psycopg2.errors.InvalidTextRepresentation: invalid input syntax for type integer: "webcam_0"
+LINE 5:             AND camera_id = 'webcam_0'
+                                    ^
+
+2026-03-27 09:59:20,781 - __main__ - INFO - Connected to PostgreSQL database: license_plate_db
+2026-03-27 09:59:20,791 - __main__ - INFO - Saved plate 'ABC123' (ID: 4)
+2026-03-27 09:59:20,792 - __main__ - INFO - Skipping duplicate plate 'ABC123' (0.0s ago)
+2026-03-27 09:59:20,808 - __main__ - INFO - Database connection closed

@@ -10,12 +10,15 @@ Endpoints:
 """
 
 from flask import Flask, request, jsonify
+from flask import send_from_directory
+
 from flask_cors import CORS
 from auth_database import AuthDatabase
 from vehicle_database import VehicleDatabase
 from datetime import datetime
 import os
 import logging
+
 
 # Configure logging
 logging.basicConfig(
@@ -28,6 +31,39 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
 
+@app.route('/')
+def serve_index():
+    return send_from_directory('mobile-app', 'index.html')
+@app.route('/login')
+def serve_login():
+    return send_from_directory('mobile-app', 'login.html')
+
+@app.route('/signup')
+def serve_signup():
+    return send_from_directory('mobile-app', 'signup.html')
+
+@app.route('/vehicles')
+def serve_vehicles():
+    return send_from_directory('mobile-app', 'vehicles.html')
+
+@app.route('/vehicles-new')
+def serve_vehicles_new():
+    return send_from_directory('mobile-app', 'vehicles-new.html')
+
+@app.route('/history')
+def serve_history():
+    return send_from_directory('mobile-app', 'history.html')
+
+@app.route('/notifications')
+def serve_notifications():
+    return send_from_directory('mobile-app', 'notifications.html')
+
+@app.route('/terms')
+def serve_terms():
+    return send_from_directory('mobile-app', 'terms.html')
+@app.route('/<path:filename>')
+def serve_static(filename):
+    return send_from_directory('mobile-app', filename)
 # Database password - should come from environment variable
 DB_PASSWORD = os.getenv('DB_PASSWORD', 'postgres')
 
