@@ -1,62 +1,108 @@
 const crypto = require('crypto');
-
-const users = [];
+const { pool } = require('../config/db');
 
 class User {
-  static create(name, email, password) {
-    // Check if email already exists
-    if (users.find(u => u.email === email)) {
-      return null;
-    }
-
-    // Hash password (simple hash for demo - use bcrypt in production)
+  static async create(name, email, password) {
     const hashedPassword = crypto.createHash('sha256').update(password).digest('hex');
     const token = crypto.randomBytes(32).toString('hex');
 
-    const user = {
-      id: users.length + 1,
-      name,
-      email,
-      password: hashedPassword,
-      token,
-      createdAt: new Date().toISOString()
-    };
+    try {
+      const result = await pool.query(
+        `INSERT INTO users (name, email, password, token)
+         VALUES ($1, $2, $3, $4)
+         RETURNING id, name, email, token`,
+        [name, email, hashedPassword, token]
+      );
 
-    users.push(user);
-    return user;
-  }
-
-  static authenticate(email, password) {
-    const hashedPassword = crypto.createHash('sha256').update(password).digest('hex');
-    const user = users.find(u => u.email === email && u.password === hashedPassword);
-    
-    if (user) {
-      // Generate new token on login
-      user.token = crypto.randomBytes(32).toString('hex');
+      return result.rows[0];
+    } catch (error) {
+      if (error.code === '23505') {
+        return null;
+      }
+      throw error;
     }
-    
-    return user;
   }
 
-  static getByToken(token) {
-    return users.find(u => u.token === token);
+  static async authenticate(email, password) {
+    const hashedPassword = crypto.createHash('sha256').update(password).digest('hex');
+    const newToken = crypto.randomBytes(32).toString('hex');
+
+    const result = await pool.query(
+      `UPDATE users
+       SET token = $1
+       WHERE email = $2 AND password = $3
+       RETURNING id, name, email, token`,
+      [newToken, email, hashedPassword]
+    );
+
+    return result.rows[0] || null;
   }
 
-  static getByEmail(email) {
-    return users.find(u => u.email === email);
+  static async getByToken(token) {
+    console.log(`[USER] Looking up user with token: ${token.substring(0, 20)}...`);
+    const result = await pool.query(
+      'SELECT id, name, email FROM users WHERE token = $1',
+      [token]
+    );
+    if (result.rows[0]) {
+      console.log(`[USER] Found user ${result.rows[0].id} with token ${token.substring(0, 20)}...`);
+    } else {
+      console.log(`[USER] No user found with token ${token.substring(0, 20)}...`);
+    }
+    return result.rows[0] || null;
   }
 
-  static getById(id) {
-    return users.find(u => u.id === id);
+  static async getByEmail(email) {
+    const result = await pool.query(
+      'SELECT id, name, email FROM users WHERE email = $1',
+      [email]
+    );
+
+    return result.rows[0] || null;
   }
 
-  static getAll() {
-    return users.map(u => ({
-      id: u.id,
-      name: u.name,
-      email: u.email,
-      createdAt: u.createdAt
-    }));
+  static async getById(id) {
+    const result = await pool.query(
+      'SELECT id, name, email FROM users WHERE id = $1',
+      [id]
+    );
+
+    return result.rows[0] || null;
+  }
+
+  static async getByIdForNotification(id) {
+    const result = await pool.query(
+      'SELECT id, name, email, push_notification_enabled, push_token FROM users WHERE id = $1',
+      [id]
+    );
+
+    return result.rows[0] || null;
+  }
+
+  static async updatePushToken(userId, pushToken) {
+    const result = await pool.query(
+      'UPDATE users SET push_token = $1 WHERE id = $2 RETURNING id, push_token',
+      [pushToken, userId]
+    );
+
+    return result.rows[0] || null;
+  }
+
+  static async toggleNotifications(userId, enabled) {
+    const result = await pool.query(
+      'UPDATE users SET push_notification_enabled = $1 WHERE id = $2 RETURNING id, push_notification_enabled',
+      [enabled, userId]
+    );
+
+    return result.rows[0] || null;
+  }
+
+  static async getAll() {
+    const result = await pool.query(
+      'SELECT id, name, email, created_at FROM users ORDER BY id ASC'
+    );
+
+    return result.rows;
   }
 }
 

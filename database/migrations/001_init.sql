@@ -1,3 +1,12 @@
+CREATE TABLE IF NOT EXISTS users (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  email VARCHAR(255) UNIQUE NOT NULL,
+  password VARCHAR(64) NOT NULL,
+  token VARCHAR(64),
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS vehicles (
   id SERIAL PRIMARY KEY,
   plate VARCHAR(16) UNIQUE NOT NULL,
@@ -6,23 +15,30 @@ CREATE TABLE IF NOT EXISTS vehicles (
 
 CREATE TABLE IF NOT EXISTS parking_spots (
   id SERIAL PRIMARY KEY,
-  floor VARCHAR(16) NOT NULL,
-  spot VARCHAR(16) NOT NULL,
-  CONSTRAINT uniq_floor_spot UNIQUE (floor, spot)
+  floor INTEGER NOT NULL,
+  lot INTEGER NOT NULL,
+  occupied BOOLEAN DEFAULT false,
+  vehicle_plate VARCHAR(16),
+  check_in_time TIMESTAMP,
+  CONSTRAINT uniq_floor_lot UNIQUE (floor, lot)
 );
 
 CREATE TABLE IF NOT EXISTS parking_sessions (
   id SERIAL PRIMARY KEY,
-  vehicle_id INTEGER NOT NULL REFERENCES vehicles(id),
-  spot_id INTEGER NOT NULL REFERENCES parking_spots(id),
+  vehicle_plate VARCHAR(16) NOT NULL,
+  floor INTEGER NOT NULL,
+  lot INTEGER NOT NULL,
   check_in_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  check_out_time TIMESTAMP NULL
+  check_out_time TIMESTAMP
 );
 
 CREATE INDEX IF NOT EXISTS idx_vehicle_plate ON vehicles(plate);
-CREATE INDEX IF NOT EXISTS idx_session_vehicle ON parking_sessions(vehicle_id);
-CREATE INDEX IF NOT EXISTS idx_session_spot ON parking_sessions(spot_id);
+CREATE INDEX IF NOT EXISTS idx_session_vehicle ON parking_sessions(vehicle_plate);
+CREATE INDEX IF NOT EXISTS idx_session_active ON parking_sessions(vehicle_plate, check_out_time);
 
-CREATE UNIQUE INDEX IF NOT EXISTS uniq_active_spot
-  ON parking_sessions(spot_id)
-  WHERE check_out_time IS NULL;
+-- Initialize parking spots if not already present
+INSERT INTO parking_spots (floor, lot, occupied) 
+SELECT f.floor, l.lot, false
+FROM generate_series(1, 5) f(floor)
+CROSS JOIN generate_series(1, 5) l(lot)
+ON CONFLICT (floor, lot) DO NOTHING;

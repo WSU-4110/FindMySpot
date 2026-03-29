@@ -1,21 +1,11 @@
-<<<<<<< HEAD
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>FindMySpot</title>
-
-=======
 
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>FindMySpot</title>
 
->>>>>>> 627f34b4a5a377d5893fe0859662745e07e6619b
   <style>
     :root{
       /* Brand */
@@ -62,11 +52,7 @@
       padding: 26px 12px;
     }
 
-<<<<<<< HEAD
-    /* Phone shell */
-=======
     /* Phone shell (same vibe as screenshot) */
->>>>>>> 627f34b4a5a377d5893fe0859662745e07e6619b
     .phone{
       width: 390px;
       max-width: 96vw;
@@ -78,11 +64,7 @@
       position:relative;
     }
 
-<<<<<<< HEAD
-    /* Header */
-=======
     /* Header (same layout, smoother) */
->>>>>>> 627f34b4a5a377d5893fe0859662745e07e6619b
     .header{
       background: linear-gradient(180deg, var(--brand-950), var(--brand-800));
       padding: 14px 16px 12px;
@@ -93,16 +75,8 @@
       box-shadow: 0 10px 18px rgba(0,0,0,.14);
       position:relative;
       z-index: 5;
-<<<<<<< HEAD
-      justify-content:space-between;
     }
 
-    .headerLeft{ display:flex; align-items:center; gap:12px; }
-
-=======
-    }
-
->>>>>>> 627f34b4a5a377d5893fe0859662745e07e6619b
     .logoMark{
       width:40px; height:40px;
       border-radius: 14px;
@@ -137,61 +111,26 @@
     }
     .brand .spot{ color: #9fd6ce; }
 
-<<<<<<< HEAD
-    .headerRight{
-      display:flex;
-      align-items:center;
-      gap:10px;
-    }
-    .chipBtn{
-      padding: 8px 10px;
-      border-radius: 999px;
-      background: rgba(255,255,255,.12);
-      border: 1px solid rgba(255,255,255,.16);
-      color:#fff;
-      font-weight:900;
-      font-size: 12px;
-      letter-spacing:.3px;
-      cursor:pointer;
-      max-width: 150px;
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
-    }
-    .chipBtn:hover{ background: rgba(255,255,255,.16); }
-
-    /* Tabs */
-=======
     /* Tabs exactly under header (same), but less blocky */
->>>>>>> 627f34b4a5a377d5893fe0859662745e07e6619b
     .tabs{
       background: rgba(255,255,255,.92);
       display:flex;
       border-bottom: 1px solid rgba(12,31,29,.10);
       backdrop-filter: blur(10px);
     }
-    .tab{
-      flex:1;
-      padding: 13px 10px;
-      font-weight: 900;
-      font-size: 12px;
-      letter-spacing: .7px;
-      text-transform: uppercase;
-      border:none;
-      background:transparent;
-      cursor:pointer;
-      color: #1b2a29;
-      position:relative;
-      transition: color .15s ease;
+    .tab {
+      display: none;
+    }
+    .tab.active {
+      display: block;
+    }
+    .form-group {
+      margin-bottom: 20px;
     }
     .tab:hover{ color:#0b4a44; }
-<<<<<<< HEAD
-    .tab.active{ color: #0c4a44; }
-=======
     .tab.active{
       color: #0c4a44;
     }
->>>>>>> 627f34b4a5a377d5893fe0859662745e07e6619b
     .tab.active:after{
       content:"";
       position:absolute;
@@ -204,196 +143,32 @@
       box-shadow: 0 6px 12px rgba(255,216,77,.25);
     }
 
-<<<<<<< HEAD
-    /* Views */
-=======
     /* Screen content */
->>>>>>> 627f34b4a5a377d5893fe0859662745e07e6619b
     .screen{
       padding: 18px 16px 12px;
       min-height: 560px;
     }
     .hidden{ display:none !important; }
 
-<<<<<<< HEAD
-    /* Form cards */
-    .form{
-      margin-top: 16px;
-      background: rgba(255,255,255,.78);
-      border: 1px solid rgba(255,255,255,.75);
-      border-radius: var(--r-card);
-      padding: 16px;
-      backdrop-filter: blur(10px);
-      box-shadow: var(--shadow-md);
-    }
-
-    .label{
-      display:block;
-      font-size: 12px;
-      font-weight: 950;
-      letter-spacing:.6px;
-      text-transform: uppercase;
-      color:#153c39;
-      margin: 12px 2px 8px;
-      text-align:center;
-    }
-
-    .input{
-      width:100%;
-      padding: 12px 12px;
-      border-radius: var(--r-field);
-      border: 1px solid rgba(12,31,29,.14);
-      background: rgba(255,255,255,.95);
-      font-size: 15px;
-      outline:none;
-      text-align:center;
-      font-weight: 800;
-      letter-spacing:.35px;
-      transition: box-shadow .15s ease, border-color .15s ease;
-    }
-    .input::placeholder{ color:#a1aca9; font-weight:700; }
-    .input:focus{
-      box-shadow: var(--ring);
-      border-color: rgba(255,216,77,.7);
-    }
-
-    .btn{
-      margin-top: 16px;
-      width:100%;
-      padding: 13px 14px;
-      border-radius: 14px;
-      border: 1px solid rgba(0,0,0,.08);
-      background: linear-gradient(180deg, var(--accent), var(--accent-2));
-      font-weight: 1000;
-      letter-spacing: .8px;
-      text-transform: uppercase;
-      cursor:pointer;
-      box-shadow: 0 16px 20px rgba(255,216,77,.26);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      gap:10px;
-      transition: transform .12s ease, filter .18s ease;
-    }
-    .btn:hover{ transform: translateY(-1px); filter: brightness(1.02); }
-    .btn:active{ transform: translateY(0); filter: brightness(.98); }
-    .btn:disabled{ opacity:.65; cursor:not-allowed; transform:none; }
-
-    .btnGhost{
-      margin-top: 12px;
-      width:100%;
-      padding: 12px 14px;
-      border-radius: 14px;
-      border: 1px solid rgba(12,31,29,.12);
-      background: rgba(255,255,255,.65);
-      font-weight: 1000;
-      letter-spacing: .7px;
-      text-transform: uppercase;
-      cursor:pointer;
-      color:#0d4b45;
-      box-shadow: var(--shadow-sm);
-      transition: transform .12s ease, filter .18s ease;
-    }
-    .btnGhost:hover{ transform: translateY(-1px); filter: brightness(1.02); }
-    .btnGhost:active{ transform: translateY(0); filter: brightness(.98); }
-    .authTop{
-      text-align:center;
-      margin-top: 6px;
-      margin-bottom: 10px;
-    }
-    .authTop .appName{
-      font-size: 28px;
-      font-weight: 1100;
-      letter-spacing:.2px;
-      margin: 6px 0 0;
-      color:#0d4b45;
-    }
-    .dividerLine{
-      height:1px;
-      background: rgba(12,31,29,.12);
-      margin: 14px 0;
-    }
-
-    /* Inline link row (Forgot password, etc.) */
-    .rowEnd{
-      display:flex;
-      justify-content:flex-end;
-      margin-top: 10px;
-    }
-    .linkBtn{
-      border:none;
-      background:transparent;
-      cursor:pointer;
-      font-weight: 900;
-      color:#0d6a61;
-      letter-spacing:.2px;
-      padding:0;
-    }
-    .linkBtn:hover{ text-decoration: underline; }
-
-    /* Footer line */
-    .footerNote{
-      margin-top: 18px;
-      text-align:center;
-      color: var(--muted);
-      font-size: 12.5px;
-      line-height: 1.35;
-      padding: 0 10px;
-    }
-
-    /* Toast messages */
-    .toast{
-      margin-top: 12px;
-      font-size: 12.5px;
-      line-height: 1.35;
-      color: #2b3b39;
-      background: rgba(255,255,255,.72);
-      border: 1px solid rgba(12,31,29,.12);
-      border-radius: 14px;
-      padding: 12px 12px;
-      box-shadow: var(--shadow-sm);
-      white-space: pre-line;
-      text-align:center;
-    }
-    .toast.ok{ border-color: rgba(18,128,96,.35); }
-    .toast.err{ border-color: rgba(214,69,69,.35); }
-=======
     /* Titles (same structure) */
->>>>>>> 627f34b4a5a377d5893fe0859662745e07e6619b
     .titleRow{
       display:flex;
       align-items:flex-start;
       gap:12px;
       margin-top: 6px;
     }
-    .carIcon{
-      width:36px;
-      height:36px;
-      border-radius: 14px;
-      background: rgba(15,106,97,.10);
-      border: 1px solid rgba(15,106,97,.12);
-      display:grid;
-      place-items:center;
-      font-size:18px;
-      box-shadow: var(--shadow-sm);
-      color: #0d5a52;
-    }
-    .h1{
-      margin:0;
-      font-size: 22px;
-      font-weight: 1000;
-      letter-spacing: .2px;
-    }
-    .sub{
-      margin: 6px 0 0;
-      font-size: 12.5px;
-      color: var(--muted);
-      line-height: 1.35;
-      max-width: 300px;
+    button {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #ffd84d, #ffcc2f);
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s;
     }
 
-<<<<<<< HEAD
-=======
     /* Form card (same placement as screenshot, but refined) */
     .form{
       margin-top: 16px;
@@ -404,47 +179,34 @@
       backdrop-filter: blur(10px);
       box-shadow: var(--shadow-md);
     }
-
-    .label{
-      display:block;
+    .result {
+      display: none;
+      text-align: center;
+      padding: 20px;
+      background: #f0f9f8;
+      border-radius: 8px;
+      margin-top: 20px;
+    }
+    .result.show {
+      display: block;
+    }
+    .result h3 {
+      color: #0d554e;
+      margin-bottom: 15px;
+    }
+    .stat {
+      display: flex;
+      justify-content: space-around;
+      margin: 20px 0;
+      text-align: center;
+    }
+    .stat-box {
+      flex: 1;
+    }
+    .stat-label {
       font-size: 12px;
-      font-weight: 950;
-      letter-spacing:.6px;
-      text-transform: uppercase;
-      color:#153c39;
-      margin: 12px 2px 8px;
-      text-align:center; /* like your mockup */
-    }
-
-    .input{
-      width:100%;
-      padding: 12px 12px;
-      border-radius: var(--r-field);
-      border: 1px solid rgba(12,31,29,.14);
-      background: rgba(255,255,255,.95);
-      font-size: 15px;
-      outline:none;
-      text-align:center;
-      font-weight: 800;
-      letter-spacing:.35px;
-      transition: box-shadow .15s ease, border-color .15s ease;
-    }
-    .input::placeholder{ color:#a1aca9; font-weight:700; }
-    .input:focus{
-      box-shadow: var(--ring);
-      border-color: rgba(255,216,77,.7);
-    }
-
-    /* Primary buttons (same big yellow buttons, just nicer) */
-    .btn{
-      margin-top: 16px;
-      width:100%;
-      padding: 13px 14px;
-      border-radius: 14px;
-      border: 1px solid rgba(0,0,0,.08);
-      background: linear-gradient(180deg, var(--accent), var(--accent-2));
-      font-weight: 1000;
-      letter-spacing: .8px;
+      font-weight: bold;
+      color: #666;
       text-transform: uppercase;
       cursor:pointer;
       box-shadow: 0 16px 20px rgba(255,216,77,.26);
@@ -459,7 +221,6 @@
     .btn:disabled{ opacity:.65; cursor:not-allowed; transform:none; }
 
     /* Footer line (same content area) */
->>>>>>> 627f34b4a5a377d5893fe0859662745e07e6619b
     .footerBar{
       margin-top: 16px;
       padding: 10px 12px;
@@ -473,25 +234,15 @@
       opacity:.92;
       flex-wrap:wrap;
     }
-    .footerItem{
-      display:flex;
-      align-items:center;
-      gap:8px;
-      white-space:nowrap;
+    .message.show {
+      display: block;
     }
-    .pillDot{
-      width:10px;height:10px;border-radius:999px;background:rgba(20,107,97,.25);
-    }
-    .badge{
-      padding: 6px 10px;
-      border-radius: 999px;
-      background: rgba(15,106,97,.10);
-      border: 1px solid rgba(15,106,97,.14);
-      font-weight: 900;
+    .message.success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
     }
 
-<<<<<<< HEAD
-=======
     /* Toast messages */
     .toast{
       margin-top: 12px;
@@ -509,7 +260,6 @@
     .toast.err{ border-color: rgba(214,69,69,.35); }
 
     /* Loading screen */
->>>>>>> 627f34b4a5a377d5893fe0859662745e07e6619b
     .center{
       display:flex;
       align-items:center;
@@ -519,12 +269,12 @@
       height: 560px;
       padding: 0 16px;
     }
-    .spinner{
-      width: 72px;
-      height: 72px;
-      border-radius: 999px;
-      border: 10px solid rgba(0,0,0,.08);
-      border-top-color: rgba(20,107,97,.88);
+    .spinner {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #0d554e;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
       animation: spin 1s linear infinite;
       box-shadow: var(--shadow-sm);
     }
@@ -540,11 +290,8 @@
       font-size: 12.5px;
       color: var(--muted);
     }
-<<<<<<< HEAD
-=======
 
     /* Result screen (same layout: banner -> floor -> spot -> details -> map -> button) */
->>>>>>> 627f34b4a5a377d5893fe0859662745e07e6619b
     .banner{
       width:100%;
       background: linear-gradient(180deg, var(--accent), var(--accent-2));
@@ -558,10 +305,7 @@
       border: 1px solid rgba(0,0,0,.08);
       box-shadow: 0 16px 18px rgba(255,216,77,.22);
     }
-<<<<<<< HEAD
-=======
 
->>>>>>> 627f34b4a5a377d5893fe0859662745e07e6619b
     .bigStat{
       text-align:center;
       margin-top: 14px;
@@ -623,92 +367,20 @@
     .directionsBtn:active{ transform: translateY(0); filter: brightness(.98); }
   </style>
 </head>
-
 <body>
   <div class="phone">
     <div class="header">
-<<<<<<< HEAD
-      <div class="headerLeft">
-        <div class="logoMark" aria-hidden="true"><span>🚗</span></div>
-        <div class="brand">FindMy<span class="spot">Spot</span></div>
-      </div>
-      <div class="headerRight">
-        <button id="headerAuthBtn" class="chipBtn" onclick="headerAuthAction()">Sign In</button>
-      </div>
-    </div>
-
-    <!-- Tabs (hidden until signed in) -->
-    <div id="tabsBar" class="tabs hidden">
-=======
       <div class="logoMark" aria-hidden="true"><span>🚗</span></div>
       <div class="brand">FindMy<span class="spot">Spot</span></div>
     </div>
 
     <div class="tabs">
->>>>>>> 627f34b4a5a377d5893fe0859662745e07e6619b
       <button id="tabFind" class="tab active" onclick="switchTab('find')">FIND MY VEHICLE</button>
       <button id="tabCheck" class="tab" onclick="switchTab('checkin')">CHECK IN VEHICLE</button>
     </div>
 
-<<<<<<< HEAD
-    <!-- LOGIN SCREEN -->
-    <div id="viewLogin" class="screen">
-      <div class="authTop">
-        <div style="font-size:54px; filter: drop-shadow(0 10px 18px rgba(0,0,0,.10));"></div>
-        <div class="appName">FindMySpot</div>
-      </div>
-      <div class="form">
-        <label class="label">Email</label>
-        <input id="loginEmail" class="input" placeholder="Enter your email" type="email" />
-        <label class="label">Password</label>
-        <input id="loginPassword" class="input" placeholder="Enter your password" type="password" />
-
-        <div class="rowEnd">
-          <button class="linkBtn" onclick="forgotPassword()">Forgot password?</button>
-        </div>
-
-        <button id="btnLogin" class="btn" onclick="doLogin()">Sign In</button>
-
-        <div class="dividerLine"></div>
-
-        <button class="btnGhost" onclick="goSignup()">Create Account</button>
-
-        <div id="loginMsg" class="toast hidden"></div>
-      </div>
-
-      <div class="footerNote">Your saved parking records are private.</div>
-    </div>
-
-    <!-- SIGNUP SCREEN-->
-    <div id="viewSignup" class="screen hidden">
-      <div class="authTop">
-        <div style="font-size:54px; filter: drop-shadow(0 10px 18px rgba(0,0,0,.10));"></div>
-        <div class="appName">Create Account</div>
-      </div>
-
-      <div class="form">
-        <label class="label">Full Name</label>
-        <input id="suName" class="input" placeholder="Your name" type="text" />
-        <label class="label">Email</label>
-        <input id="suEmail" class="input" placeholder="you@example.com" type="email" />
-        <label class="label">Password</label>
-        <input id="suPass" class="input" placeholder="At least 6 characters" type="password" />
-        <label class="label">Confirm Password</label>
-        <input id="suPass2" class="input" placeholder="Confirm password" type="password" />
-        <button id="btnSignup" class="btn" onclick="doSignup()">Create Account</button>
-        <button class="btnGhost" onclick="goLogin()">Back to Sign In</button>
-        <div id="signupMsg" class="toast hidden"></div>
-      </div>
-
-      <div class="footerNote">We don’t share your information.</div>
-    </div>
-
-    <!-- FIND SCREEN -->
-    <div id="viewFind" class="screen hidden">
-=======
     <!-- FIND SCREEN -->
     <div id="viewFind" class="screen">
->>>>>>> 627f34b4a5a377d5893fe0859662745e07e6619b
       <div class="titleRow">
         <div class="carIcon">🚘</div>
         <div>
@@ -720,12 +392,6 @@
       <div class="form">
         <label class="label">LICENSE PLATE NUMBER</label>
         <input id="findPlate" class="input" placeholder="ABCD123" autocomplete="off" />
-<<<<<<< HEAD
-        <button id="btnFind" class="btn" onclick="findVehicle()">
-          🔍 <span>FIND VEHICLE</span>
-        </button>
-        <div id="findMsg" class="toast hidden"></div>
-=======
 
         <button id="btnFind" class="btn" onclick="findVehicle()">
           🔍 <span>FIND VEHICLE</span>
@@ -733,7 +399,6 @@
 
         <div id="findMsg" class="toast hidden"></div>
 
->>>>>>> 627f34b4a5a377d5893fe0859662745e07e6619b
         <div class="footerBar">
           <div class="footerItem"><span class="pillDot"></span> Need Help? <strong>(123) 4567-1010</strong></div>
           <div class="footerItem"><span class="badge">AI-Powered Security</span></div>
@@ -749,63 +414,37 @@
           <p class="h1">CHECK IN VEHICLE</p>
           <p class="sub">In a real system, the camera will detect this automatically.</p>
         </div>
+        <div id="resultMeta" style="color: #666; font-size: 14px; margin: 15px 0;"></div>
       </div>
 
-      <div class="form">
-        <label class="label">LICENSE PLATE NUMBER</label>
-        <input id="checkPlate" class="input" placeholder="ABCD123" autocomplete="off" />
-
-        <label class="label">FLOOR</label>
-        <input id="checkFloor" class="input" placeholder="FLOOR 1" autocomplete="off" />
-
-        <label class="label">SPOT</label>
-        <input id="checkSpot" class="input" placeholder="A1" autocomplete="off" />
-
-        <button id="btnCheckin" class="btn" onclick="checkIn()">
-          ✓ <span>CHECK IN</span>
-        </button>
-
-        <div id="checkMsg" class="toast hidden"></div>
-
-        <div class="footerBar">
-          <div class="footerItem"><span class="pillDot"></span> Need Help? <strong>(123) 4567-1010</strong></div>
-          <div class="footerItem"><span class="badge">AI-Powered Security</span></div>
-        </div>
+      <div id="findLoading" class="loading">
+        <div class="spinner"></div>
+        <p>Loading...</p>
       </div>
     </div>
 
-    <!-- LOADING SCREEN -->
-    <div id="viewLoading" class="screen hidden">
-      <div class="center">
-        <div class="spinner" aria-label="Loading"></div>
-        <div class="loadingText">Loading...</div>
-        <div class="loadingSub">Contacting the server</div>
+    <!-- CHECK-IN TAB -->
+    <div id="checkin" class="tab">
+      <div class="form-group">
+        <label>License Plate</label>
+        <input type="text" id="checkPlate" placeholder="DONOTASK" autocomplete="off">
       </div>
     </div>
 
     <!-- RESULT SCREEN -->
     <div id="viewResult" class="screen hidden">
       <div class="banner">Location Found!</div>
-<<<<<<< HEAD
-      <div class="bigStat">
-        <div class="k">FLOOR</div>
-        <p id="resFloor" class="v">—</p>
-=======
 
       <div class="bigStat">
         <div class="k">FLOOR</div>
         <p id="resFloor" class="v">—</p>
 
->>>>>>> 627f34b4a5a377d5893fe0859662745e07e6619b
         <div class="k">PARKING SPOT</div>
         <p id="resSpot" class="v">—</p>
       </div>
 
       <div id="resMeta" class="meta"></div>
-<<<<<<< HEAD
-=======
 
->>>>>>> 627f34b4a5a377d5893fe0859662745e07e6619b
       <div class="map" aria-label="Map preview">
         <svg viewBox="0 0 800 420" width="100%" height="240" xmlns="http://www.w3.org/2000/svg">
           <defs>
@@ -815,8 +454,6 @@
             </linearGradient>
           </defs>
           <rect x="0" y="0" width="800" height="420" fill="url(#g)"/>
-<<<<<<< HEAD
-=======
           <g stroke="#8aa6a1" stroke-width="18" opacity="0.9" stroke-linecap="round">
             <path d="M60 70 H740"/>
             <path d="M120 160 H700"/>
@@ -851,16 +488,12 @@
             <circle cx="0" cy="-12" r="7" fill="#fff"/>
           </g>
 
->>>>>>> 627f34b4a5a377d5893fe0859662745e07e6619b
           <text x="24" y="400" font-size="22" fill="#355a56" font-weight="800">
             Map preview (placeholder)
           </text>
         </svg>
       </div>
-<<<<<<< HEAD
-=======
 
->>>>>>> 627f34b4a5a377d5893fe0859662745e07e6619b
       <button class="directionsBtn" onclick="getDirections()">Get Directions</button>
       <div id="resultMsg" class="toast hidden"></div>
     </div>
@@ -868,56 +501,60 @@
 
   <script>
     const API_BASE_URL = "http://localhost:5000";
-<<<<<<< HEAD
-    function usersGet(){
-      try{ return JSON.parse(localStorage.getItem("fms_users") || "{}"); }
-      catch{ return {}; }
-    }
-    function usersSet(obj){ localStorage.setItem("fms_users", JSON.stringify(obj)); }
-    function currentUser(){ return localStorage.getItem("fms_currentUser") || ""; }
-    function setCurrentUser(email){
-      if(email) localStorage.setItem("fms_currentUser", email);
-      else localStorage.removeItem("fms_currentUser");
-      renderAuthUI();
-    }
-    function toast(elId, text, type){
-      const el = document.getElementById(elId);
-=======
     function normalizePlate(p){
       return (p || "").trim().toUpperCase().replace(/\s+/g, "");
     }
 
-    function showOnly(viewId){
-      const views = ["viewFind","viewCheckin","viewLoading","viewResult"];
-      for(const v of views){
-        document.getElementById(v).classList.toggle("hidden", v !== viewId);
+    function getLocalVehicles() {
+      try {
+        const parsed = JSON.parse(localStorage.getItem(LOCAL_VEHICLES_KEY) || "[]");
+        return Array.isArray(parsed) ? parsed : [];
+      } catch {
+        return [];
       }
     }
 
-    function switchTab(which){
-      document.getElementById("tabFind").classList.toggle("active", which === "find");
-      document.getElementById("tabCheck").classList.toggle("active", which === "checkin");
-      showOnly(which === "find" ? "viewFind" : "viewCheckin");
-      clearMessages();
+    function setLocalVehicles(items) {
+      localStorage.setItem(LOCAL_VEHICLES_KEY, JSON.stringify(items));
     }
 
-    function clearMessages(){
-      const ids = ["findMsg","checkMsg","resultMsg"];
-      for(const id of ids){
-        const el = document.getElementById(id);
-        el.classList.add("hidden");
-        el.classList.remove("ok","err");
-        el.textContent = "";
+    function upsertLocalVehicle(token, plate) {
+      const normalized = normalizePlate(plate);
+      if (!token || !normalized) return;
+
+      const vehicles = getLocalVehicles();
+      const index = vehicles.findIndex((item) => item.token === token && normalizePlate(item.license_plate) === normalized);
+      const payload = {
+        id: `local-${normalized}`,
+        token,
+        vehicle_name: normalized,
+        license_plate: normalized,
+        created_at: new Date().toISOString()
+      };
+
+      if (index >= 0) {
+        vehicles[index] = { ...vehicles[index], ...payload };
+      } else {
+        vehicles.unshift(payload);
+      }
+
+      setLocalVehicles(vehicles);
+    }
+
+    function getLocalParkingHistory() {
+      try {
+        const parsed = JSON.parse(localStorage.getItem(LOCAL_HISTORY_KEY) || "[]");
+        return Array.isArray(parsed) ? parsed : [];
+      } catch {
+        return [];
       }
     }
 
-    function setBusy(buttonId, busy){
-      const btn = document.getElementById(buttonId);
-      btn.disabled = !!busy;
+    function setLocalParkingHistory(items) {
+      localStorage.setItem(LOCAL_HISTORY_KEY, JSON.stringify(items));
     }
 
     function toast(el, text, type){
->>>>>>> 627f34b4a5a377d5893fe0859662745e07e6619b
       el.textContent = text;
       el.classList.remove("hidden","ok","err");
       if(type === "ok") el.classList.add("ok");
@@ -1058,51 +695,13 @@
       btn.disabled = !!busy;
     }
 
-    async function safeJson(response){
+    async function safeJson(response) {
       const text = await response.text();
-      try{ return JSON.parse(text); }
-      catch{ return { message: text }; }
-    }
-
-    function parkingGet(){
-      try{ return JSON.parse(localStorage.getItem("fms_parking") || "{}"); }
-      catch{ return {}; }
-    }
-    function parkingSet(obj){ localStorage.setItem("fms_parking", JSON.stringify(obj)); }
-    async function checkIn(){
-      if(!currentUser()){
-        showOnly("viewLogin");
-        return;
+      try {
+        return JSON.parse(text);
+      } catch {
+        return { message: text };
       }
-      clearMessages();
-      const plate = normalizePlate(document.getElementById("checkPlate").value);
-      const floor = (document.getElementById("checkFloor").value || "").trim();
-      const spot  = (document.getElementById("checkSpot").value  || "").trim().toUpperCase();
-      const msg = document.getElementById("checkMsg");
-
-      if(!plate || !floor || !spot){
-        msg.textContent = "Please fill: plate, floor, and spot.";
-        msg.classList.remove("hidden"); msg.classList.add("err");
-        return;
-      }
-      setBusy("btnCheckin", true);
-      try{
-        // Local demo save
-        const db = parkingGet();
-        db[plate] = { plate, floor, spot, parkedSince: new Date().toISOString(), user: currentUser() };
-        parkingSet(db);
-
-        msg.textContent = `Checked in ${plate} successfully.`;
-        msg.classList.remove("hidden"); msg.classList.remove("err"); msg.classList.add("ok");
-      }catch(e){
-        msg.textContent = "Save failed.";
-        msg.classList.remove("hidden"); msg.classList.add("err");
-=======
-
-    async function safeJson(response){
-      const text = await response.text();
-      try{ return JSON.parse(text); }
-      catch{ return { message: text }; }
     }
 
     async function checkIn(){
@@ -1118,26 +717,79 @@
         return;
       }
 
-      setBusy("btnCheckin", true);
+      upsertLocalVehicle(token, plate);
 
-      try{
-        const res = await fetch(`${API_BASE_URL}/api/checkin`, {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/vehicles`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ plate, floor, spot })
+          body: JSON.stringify({
+            token,
+            licensePlate: plate,
+            vehicleName: plate
+          })
         });
 
-        const data = await safeJson(res);
+        if (response.ok) return;
+        const data = await safeJson(response);
+        const message = String(data?.message || "").toLowerCase();
+        if (message.includes("already registered")) return;
+        console.warn("Vehicle registration warning:", data?.message || "Unknown");
+      } catch (error) {
+        console.warn("Vehicle registration request failed:", error);
+      }
+    }
 
-        if(!res.ok){
-          toast(msg, data.message || "Check-in failed.", "err");
+    // Tab switching
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const tabName = this.getAttribute('data-tab');
+        
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        
+        document.getElementById(tabName).classList.add('active');
+        this.classList.add('active');
+      });
+    });
+
+    function showMessage(elementId, message, type) {
+      const el = document.getElementById(elementId);
+      el.textContent = message;
+      el.className = 'message show ' + type;
+    }
+
+    function hideMessage(elementId) {
+      const el = document.getElementById(elementId);
+      el.className = 'message';
+    }
+
+    async function findVehicle() {
+      const plate = (document.getElementById("findPlate").value || "").trim().toUpperCase();
+      
+      if (!plate) {
+        showMessage('findMsg', '❌ Please enter a license plate', 'error');
+        return;
+      }
+
+      hideMessage('findMsg');
+      document.getElementById('findResult').classList.remove('show');
+      document.getElementById('findLoading').classList.add('show');
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/parking/locate/${encodeURIComponent(plate)}`);
+        const data = await response.json();
+
+        document.getElementById('findLoading').classList.remove('show');
+
+        if (!response.ok) {
+          showMessage('findMsg', `❌ ${data.message || 'Vehicle not found'}`, 'error');
           return;
         }
 
         toast(msg, data.message || `Checked in ${plate} successfully.`, "ok");
       }catch(e){
         toast(msg, "Backend not reachable. Make sure the server is running and CORS is enabled.", "err");
->>>>>>> 627f34b4a5a377d5893fe0859662745e07e6619b
       }finally{
         setBusy("btnCheckin", false);
       }
@@ -1156,15 +808,14 @@
         msg.classList.remove("hidden"); msg.classList.add("err");
 =======
 
-    async function findVehicle(){
-      clearMessages();
-
-      const plate = normalizePlate(document.getElementById("findPlate").value);
-      const msg = document.getElementById("findMsg");
+    async function checkIn() {
+      const plate = normalizePlate(document.getElementById("checkPlate").value || "");
+      const floor = document.getElementById("checkFloor").value;
+      const spot = (document.getElementById("checkSpot").value || "").trim();
+      const token = currentUser();
 
       if(!plate){
         toast(msg, "Please enter a license plate number.", "err");
->>>>>>> 627f34b4a5a377d5893fe0859662745e07e6619b
         return;
       }
 
@@ -1172,27 +823,11 @@
       showOnly("viewLoading");
 
       try{
-<<<<<<< HEAD
-        // Local demo lookup
-        const db = parkingGet();
-        const data = db[plate];
-
-        if(!data){
-          showOnly("viewFind");
-          msg.textContent = "Vehicle not found.";
-          msg.classList.remove("hidden"); msg.classList.add("err");
-          return;
-        }
-        document.getElementById("resFloor").textContent = data.floor ?? "—";
-        document.getElementById("resSpot").textContent  = data.spot  ?? "—";
-        const parkedSince = data.parkedSince ? new Date(data.parkedSince).toLocaleString() : "Unknown";
-=======
         const res = await fetch(`${API_BASE_URL}/api/vehicle?plate=${encodeURIComponent(plate)}`);
         const data = await safeJson(res);
 
-        if(!res.ok){
-          showOnly("viewFind");
-          toast(msg, data.message || "Vehicle not found.", "err");
+        if (!response.ok) {
+          showMessage('checkinMsg', `⚠️ Saved to My Vehicles & History, but check-in failed: ${data.message || 'Unknown error'}`, 'error');
           return;
         }
 
@@ -1201,40 +836,19 @@
 
         const parkedSince = data.parkedSince ? new Date(data.parkedSince).toLocaleString() : "Unknown";
 
->>>>>>> 627f34b4a5a377d5893fe0859662745e07e6619b
         document.getElementById("resMeta").innerText =
           `License Plate: ${data.plate || plate}\n` +
           `Parked Since: ${parkedSince}\n` +
           `Follow the navigation to your vehicle.`;
-<<<<<<< HEAD
-        showOnly("viewResult");
-      }catch(e){
-        showOnly("viewFind");
-        msg.textContent = "Lookup failed.";
-        msg.classList.remove("hidden"); msg.classList.add("err");
-=======
 
         showOnly("viewResult");
       }catch(e){
         showOnly("viewFind");
         toast(msg, "Backend not reachable. Make sure the server is running and CORS is enabled.", "err");
->>>>>>> 627f34b4a5a377d5893fe0859662745e07e6619b
       }finally{
         setBusy("btnFind", false);
       }
     }
-<<<<<<< HEAD
-    function getDirections(){
-      const msg = document.getElementById("resultMsg");
-      msg.textContent = "Directions placeholder. Later connect to Google Maps / Apple Maps.";
-      msg.classList.remove("hidden");
-      msg.classList.remove("err");
-      msg.classList.add("ok");
-    }
-
-    // Start
-    renderAuthUI();
-=======
 
     function getDirections(){
       const msg = document.getElementById("resultMsg");
@@ -1243,7 +857,6 @@
 
     // Start
     switchTab("find");
->>>>>>> 627f34b4a5a377d5893fe0859662745e07e6619b
   </script>
 </body>
 </html>

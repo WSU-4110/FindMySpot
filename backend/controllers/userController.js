@@ -2,7 +2,7 @@ const { User } = require('../models/user');
 
 class UserController {
   // Register a new user
-  static register(req, res) {
+  static async register(req, res) {
     try {
       const { name, email, password } = req.body;
 
@@ -20,7 +20,7 @@ class UserController {
         });
       }
 
-      const user = User.create(name, email, password);
+      const user = await User.create(name, email, password);
       
       if (!user) {
         return res.status(400).json({
@@ -48,7 +48,7 @@ class UserController {
   }
 
   // Login user
-  static login(req, res) {
+  static async login(req, res) {
     try {
       const { email, password } = req.body;
 
@@ -59,7 +59,7 @@ class UserController {
         });
       }
 
-      const user = User.authenticate(email, password);
+      const user = await User.authenticate(email, password);
       
       if (!user) {
         return res.status(401).json({
@@ -87,10 +87,10 @@ class UserController {
   }
 
   // Get user profile
-  static getProfile(req, res) {
+  static async getProfile(req, res) {
     try {
       const { token } = req.params;
-      const user = User.getByToken(token);
+      const user = await User.getByToken(token);
 
       if (!user) {
         return res.status(401).json({
@@ -116,7 +116,7 @@ class UserController {
   }
 
   // Verify token
-  static verifyToken(req, res) {
+  static async verifyToken(req, res) {
     try {
       const { token } = req.body;
 
@@ -127,7 +127,7 @@ class UserController {
         });
       }
 
-      const user = User.getByToken(token);
+      const user = await User.getByToken(token);
       
       if (!user) {
         return res.status(401).json({

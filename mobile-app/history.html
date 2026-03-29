@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FindMySpot - Parking History</title>
+
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .screen {
+      height: calc(100vh - 190px);
+      max-height: 720px;
+      overflow-y: scroll;
+      scrollbar-gutter: stable;
+    }
+
+    .history-item {
+      background: rgba(255, 255, 255, 0.88);
+      border: 1px solid rgba(12, 31, 29, 0.12);
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 10px;
+      box-shadow: var(--shadow-sm);
+    }
+    .history-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .plate-badge {
+      background: linear-gradient(135deg, #ffd84d 0%, #ffcc2f 100%);
+      color: #0b1b1a;
+      border: 1px solid rgba(0, 0, 0, 0.15);
+      border-radius: 8px;
+      padding: 6px 10px;
+      font-weight: 900;
+      font-size: 12px;
+      letter-spacing: 0.3px;
+    }
+    .spot-chip {
+      background: rgba(15, 106, 97, 0.1);
+      border: 1px solid rgba(15, 106, 97, 0.18);
+      color: #0d4b45;
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 11px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+    .history-meta {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 7px;
+      font-size: 12px;
+      color: #294240;
+    }
+    .meta-label {
+      color: var(--muted);
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      margin-right: 6px;
+    }
+    .empty-state {
+      text-align: center;
+      color: var(--muted);
+      padding: 24px 12px;
+      background: rgba(255, 255, 255, 0.72);
+      border: 1px solid rgba(12, 31, 29, 0.1);
+      border-radius: 12px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="phone">
+  <div id="navBtn" class="menu-toggle" onclick="toggleNav()">☰</div>
+
+  <div id="mySidenav" class="sidenav">
+    <a href="index.html">🏠 Home / Find</a>
+    <a href="vehicles.html">🚗 My Vehicles</a>
+    <a href="history.html">🕘 Parking History</a>
+    <a href="terms.html">⚖️ Terms of Service</a>
+  </div>
+
+  <div class="header">
+    <div class="headerLeft" style="padding-left: 35px;">
+      <div class="logoMark"><span>🕘</span></div>
+      <div class="brand">Find My<span class="spot">Spot</span></div>
+    </div>
+    <div class="headerRight">
+      <button class="chipBtn" onclick="logout()">Logout</button>
+    </div>
+  </div>
+
+  <div class="screen">
+    <div class="titleRow">
+      <div class="carIcon">📋</div>
+      <div>
+        <h1 class="h1">Parking History</h1>
+        <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">Past sessions for your saved vehicles.</div>
+      </div>
+    </div>
+
+    <div id="historyList" style="margin-top: 14px;"></div>
+  </div>
+  </div>
+
+  <script>
+    const API_BASE_URL = "http://localhost:3000";
+    const LOCAL_HISTORY_KEY = "fms_parkingHistory";
+
+    function currentUser() {
+      return localStorage.getItem("fms_currentUser") || "";
+    }
+
+    function normalizePlate(plate) {
+      return String(plate || "").trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
+    }
+
+    function getLocalParkingHistory() {
+      try {
+        const parsed = JSON.parse(localStorage.getItem(LOCAL_HISTORY_KEY) || "[]");
+        return Array.isArray(parsed) ? parsed : [];
+      } catch {
+        return [];
+      }
+    }
+
+    function getLocalParkingHistoryForToken(token) {
+      const all = getLocalParkingHistory();
+      if (!token) return all;
+      const filtered = all.filter((item) => !item.token || item.token === token);
+      return filtered.length > 0 ? filtered : all;
+    }
+
+    function mergeHistory(backendItems, localItems) {
+      const merged = [];
+      const seen = new Set();
+
+      for (const item of [...(backendItems || []), ...(localItems || [])]) {
+        const key = `${normalizePlate(item.license_plate)}|${item.check_in_time || ""}`;
+        if (!normalizePlate(item.license_plate) || seen.has(key)) continue;
+        seen.add(key);
+        merged.push(item);
+      }
+
+      merged.sort((a, b) => new Date(b.check_in_time || 0) - new Date(a.check_in_time || 0));
+      return merged;
+    }
+
+    function logout() {
+      localStorage.removeItem("fms_currentUser");
+      window.location.href = "login.html";
+    }
+
+    function toggleNav() {
+      const nav = document.getElementById("mySidenav");
+      const btn = document.getElementById("navBtn");
+
+      if (nav.style.width === "180px") {
+        nav.style.width = "0";
+        btn.classList.remove("open");
+      } else {
+        nav.style.width = "180px";
+        btn.classList.add("open");
+      }
+    }
+
+    function formatTimestamp(timestamp) {
+      if (!timestamp) return "-";
+      const date = new Date(timestamp);
+      if (Number.isNaN(date.getTime())) return "-";
+      return date.toLocaleString();
+    }
+
+    function isRecentlySaved(timestamp) {
+      if (!timestamp) return false;
+      const time = new Date(timestamp).getTime();
+      if (Number.isNaN(time)) return false;
+      return (Date.now() - time) <= 5 * 60 * 1000;
+    }
+
+    function renderHistory(items) {
+      const container = document.getElementById("historyList");
+
+      if (!items || items.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div style="font-size: 26px;">🅿️</div>
+            <div style="margin-top: 8px; font-weight: 800; color: #214240;">No parking sessions yet</div>
+            <div style="margin-top: 4px; font-size: 12px;">Check in a saved vehicle to build your history.</div>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = items.map((item) => {
+        const checkoutText = item.check_out_time ? formatTimestamp(item.check_out_time) : "Active session";
+        const recentTag = isRecentlySaved(item.check_in_time)
+          ? '<span style="font-size: 11px; color: var(--muted); margin-left: 8px; font-weight: 800;">JUST SAVED</span>'
+          : '';
+        return `
+          <div class="history-item">
+            <div class="history-top">
+              <div class="plate-badge">${item.license_plate || "-"}${recentTag}</div>
+              <div class="spot-chip">Spot ${item.spot_number || "-"}</div>
+            </div>
+            <div class="history-meta">
+              <div><span class="meta-label">Vehicle:</span>${item.vehicle_name || item.license_plate || "-"}</div>
+              <div><span class="meta-label">Floor/Area:</span>${item.parking_area || "-"}</div>
+              <div><span class="meta-label">Parked At:</span>${formatTimestamp(item.check_in_time)}</div>
+              <div><span class="meta-label">Ended At:</span>${checkoutText}</div>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    async function loadHistory() {
+      const token = currentUser();
+      if (!token) {
+        window.location.href = "login.html";
+        return;
+      }
+
+      const localHistory = getLocalParkingHistoryForToken(token);
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/vehicles/${token}/history?limit=200`);
+        const data = await response.json();
+
+        if (!response.ok) {
+          renderHistory(localHistory);
+          return;
+        }
+
+        renderHistory(mergeHistory(data.data || [], localHistory));
+      } catch (error) {
+        console.error("Error loading parking history:", error);
+        renderHistory(localHistory);
+      }
+    }
+
+    if (!currentUser()) {
+      window.location.href = "login.html";
+    } else {
+      loadHistory();
+    }
+  </script>
+</body>
+</html>
