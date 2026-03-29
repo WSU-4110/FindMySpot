@@ -1,122 +1,55 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>FindMySpot</title>
-
   <style>
-    :root{
-      /* Brand */
-      --brand-950:#062b27;
-      --brand-900:#073733;
-      --brand-850:#0a433e;
-      --brand-800:#0d554e;
-      --brand-700:#0f6a61;
-
-      /* UI */
-      --bg1:#eef3f2;
-      --bg2:#d7e3df;
-      --card:#ffffff;
-      --text:#0b1b1a;
-      --muted:#6b7a78;
-      --line: rgba(12,31,29,.12);
-
-      --accent:#ffd84d;
-      --accent-2:#ffcc2f;
-
-      --shadow-lg: 0 18px 48px rgba(0,0,0,.16);
-      --shadow-md: 0 12px 26px rgba(0,0,0,.12);
-      --shadow-sm: 0 10px 18px rgba(0,0,0,.08);
-
-      --r-outer: 24px;
-      --r-card: 18px;
-      --r-field: 12px;
-
-      --ring: 0 0 0 4px rgba(255,216,77,.28);
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #0d554e 0%, #0f6a61 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
     }
-
-    *{ box-sizing:border-box; }
-    html, body { height:100%; }
-    body{
-      margin:0;
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      color: var(--text);
-      background:
-        radial-gradient(1000px 520px at 18% 0%, rgba(255,216,77,.18), rgba(255,216,77,0) 55%),
-        radial-gradient(900px 520px at 82% 10%, rgba(15,106,97,.16), rgba(15,106,97,0) 62%),
-        linear-gradient(180deg, var(--bg1), var(--bg2));
-      display:flex;
-      justify-content:center;
-      padding: 26px 12px;
+    .container {
+      background: white;
+      border-radius: 20px;
+      padding: 40px;
+      max-width: 500px;
+      width: 100%;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
     }
-
-    /* Phone shell (same vibe as screenshot) */
-    .phone{
-      width: 390px;
-      max-width: 96vw;
-      border: 10px solid #1e5e59;
-      border-radius: 22px;
-      overflow:hidden;
-      background: linear-gradient(#eaf1ef, #cfdad7);
-      box-shadow: var(--shadow-lg);
-      position:relative;
+    h1 {
+      color: #0d554e;
+      margin-bottom: 30px;
+      text-align: center;
     }
-
-    /* Header (same layout, smoother) */
-    .header{
-      background: linear-gradient(180deg, var(--brand-950), var(--brand-800));
-      padding: 14px 16px 12px;
-      display:flex;
-      align-items:center;
-      gap:12px;
-      color:#fff;
-      box-shadow: 0 10px 18px rgba(0,0,0,.14);
-      position:relative;
-      z-index: 5;
+    .tab-buttons {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 30px;
     }
-
-    .logoMark{
-      width:40px; height:40px;
-      border-radius: 14px;
-      background: rgba(255,255,255,.10);
-      border: 1px solid rgba(255,255,255,.16);
-      display:grid;
-      place-items:center;
-      position:relative;
-      overflow:hidden;
+    .tab-btn {
+      flex: 1;
+      padding: 12px;
+      border: 2px solid #ddd;
+      background: white;
+      cursor: pointer;
+      border-radius: 8px;
+      font-weight: bold;
+      transition: all 0.3s;
     }
-    .logoMark:before{
-      content:"";
-      position:absolute;
-      inset:-22px;
-      background: radial-gradient(circle at 30% 30%, rgba(255,216,77,.9), rgba(255,216,77,0) 55%);
-      transform: rotate(10deg);
+    .tab-btn.active {
+      border-color: #0d554e;
+      background: #0d554e;
+      color: white;
     }
-    .logoMark span{
-      position:relative;
-      font-size:20px;
-      filter: drop-shadow(0 2px 3px rgba(0,0,0,.25));
-    }
-
-    .brand{
-      font-weight: 950;
-      letter-spacing: .2px;
-      font-size: 22px;
-      line-height: 1;
-      display:flex;
-      align-items:baseline;
-      gap:0;
-    }
-    .brand .spot{ color: #9fd6ce; }
-
-    /* Tabs exactly under header (same), but less blocky */
-    .tabs{
-      background: rgba(255,255,255,.92);
-      display:flex;
-      border-bottom: 1px solid rgba(12,31,29,.10);
-      backdrop-filter: blur(10px);
+    .tab-btn:hover {
+      border-color: #0d554e;
     }
     .tab {
       display: none;
@@ -127,35 +60,25 @@
     .form-group {
       margin-bottom: 20px;
     }
-    .tab:hover{ color:#0b4a44; }
-    .tab.active{
-      color: #0c4a44;
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: bold;
+      color: #333;
     }
-    .tab.active:after{
-      content:"";
-      position:absolute;
-      left:22px;
-      right:22px;
-      bottom:0;
-      height:3px;
-      background: linear-gradient(90deg, var(--accent), var(--accent-2));
-      border-radius: 999px;
-      box-shadow: 0 6px 12px rgba(255,216,77,.25);
+    input {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: bold;
+      text-align: center;
     }
-
-    /* Screen content */
-    .screen{
-      padding: 18px 16px 12px;
-      min-height: 560px;
-    }
-    .hidden{ display:none !important; }
-
-    /* Titles (same structure) */
-    .titleRow{
-      display:flex;
-      align-items:flex-start;
-      gap:12px;
-      margin-top: 6px;
+    input:focus {
+      outline: none;
+      border-color: #0d554e;
+      box-shadow: 0 0 0 3px rgba(13,85,78,0.1);
     }
     button {
       width: 100%;
@@ -168,16 +91,14 @@
       cursor: pointer;
       transition: all 0.3s;
     }
-
-    /* Form card (same placement as screenshot, but refined) */
-    .form{
-      margin-top: 16px;
-      background: rgba(255,255,255,.78);
-      border: 1px solid rgba(255,255,255,.75);
-      border-radius: var(--r-card);
-      padding: 16px;
-      backdrop-filter: blur(10px);
-      box-shadow: var(--shadow-md);
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 20px rgba(255,216,77,0.4);
+    }
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
     }
     .result {
       display: none;
@@ -208,31 +129,19 @@
       font-weight: bold;
       color: #666;
       text-transform: uppercase;
-      cursor:pointer;
-      box-shadow: 0 16px 20px rgba(255,216,77,.26);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      gap:10px;
-      transition: transform .12s ease, filter .18s ease;
+      margin-bottom: 8px;
     }
-    .btn:hover{ transform: translateY(-1px); filter: brightness(1.02); }
-    .btn:active{ transform: translateY(0); filter: brightness(.98); }
-    .btn:disabled{ opacity:.65; cursor:not-allowed; transform:none; }
-
-    /* Footer line (same content area) */
-    .footerBar{
-      margin-top: 16px;
-      padding: 10px 12px;
-      border-top: 1px solid rgba(0,0,0,.08);
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:10px;
-      font-size: 11.5px;
-      color: #2a3b39;
-      opacity:.92;
-      flex-wrap:wrap;
+    .stat-value {
+      font-size: 32px;
+      font-weight: bold;
+      color: #0d554e;
+    }
+    .message {
+      margin-top: 15px;
+      padding: 15px;
+      border-radius: 8px;
+      font-size: 14px;
+      display: none;
     }
     .message.show {
       display: block;
@@ -242,32 +151,18 @@
       color: #155724;
       border: 1px solid #c3e6cb;
     }
-
-    /* Toast messages */
-    .toast{
-      margin-top: 12px;
-      font-size: 12.5px;
-      line-height: 1.35;
-      color: #2b3b39;
-      background: rgba(255,255,255,.72);
-      border: 1px solid rgba(12,31,29,.12);
-      border-radius: 14px;
-      padding: 12px 12px;
-      box-shadow: var(--shadow-sm);
-      white-space: pre-line;
+    .message.error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
     }
-    .toast.ok{ border-color: rgba(18,128,96,.35); }
-    .toast.err{ border-color: rgba(214,69,69,.35); }
-
-    /* Loading screen */
-    .center{
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      flex-direction:column;
-      gap:18px;
-      height: 560px;
-      padding: 0 16px;
+    .loading {
+      display: none;
+      text-align: center;
+      padding: 40px 20px;
+    }
+    .loading.show {
+      display: block;
     }
     .spinner {
       border: 4px solid #f3f3f3;
@@ -276,143 +171,43 @@
       width: 40px;
       height: 40px;
       animation: spin 1s linear infinite;
-      box-shadow: var(--shadow-sm);
+      margin: 0 auto 20px;
     }
-    @keyframes spin{ to{ transform: rotate(360deg); } }
-    .loadingText{
-      font-size: 20px;
-      font-weight: 1000;
-      color: #174a45;
-      letter-spacing: .2px;
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
     }
-    .loadingSub{
-      margin-top: -10px;
-      font-size: 12.5px;
-      color: var(--muted);
-    }
-
-    /* Result screen (same layout: banner -> floor -> spot -> details -> map -> button) */
-    .banner{
-      width:100%;
-      background: linear-gradient(180deg, var(--accent), var(--accent-2));
-      color:#0c3b37;
-      font-weight: 1000;
-      letter-spacing:.7px;
-      text-transform: uppercase;
-      border-radius: 14px;
-      padding: 12px 12px;
-      text-align:center;
-      border: 1px solid rgba(0,0,0,.08);
-      box-shadow: 0 16px 18px rgba(255,216,77,.22);
-    }
-
-    .bigStat{
-      text-align:center;
-      margin-top: 14px;
-    }
-    .bigStat .k{
-      font-weight: 1000;
-      letter-spacing: .9px;
-      text-transform: uppercase;
-      color:#1c2f2d;
-      font-size: 14px;
-      margin: 14px 0 6px;
-    }
-    .bigStat .v{
-      font-weight: 1100;
-      font-size: 52px;
-      color:#0d4b45;
-      margin:0;
-      line-height: 1;
-    }
-
-    .meta{
-      margin-top: 12px;
-      color: #4d5e5c;
-      font-size: 12.5px;
-      line-height: 1.4;
-      white-space: pre-line;
-      background: rgba(255,255,255,.55);
-      border: 1px solid rgba(12,31,29,.10);
-      border-radius: 14px;
-      padding: 12px 12px;
-      box-shadow: var(--shadow-sm);
-    }
-
-    .map{
-      margin-top: 12px;
-      border-radius: 16px;
-      border: 1px solid rgba(0,0,0,.08);
-      overflow:hidden;
-      background:#fff;
-      box-shadow: var(--shadow-md);
-    }
-
-    .directionsBtn{
-      margin-top: 12px;
-      width:100%;
-      padding: 13px 14px;
-      border-radius: 14px;
-      border: 1px solid rgba(0,0,0,.10);
-      background: linear-gradient(180deg, var(--brand-800), var(--brand-700));
-      color:#fff;
-      font-weight: 1000;
-      font-size: 15px;
-      letter-spacing: .4px;
-      cursor:pointer;
-      box-shadow: 0 16px 18px rgba(18,95,87,.22);
-      transition: transform .12s ease, filter .18s ease;
-    }
-    .directionsBtn:hover{ transform: translateY(-1px); filter: brightness(1.03); }
-    .directionsBtn:active{ transform: translateY(0); filter: brightness(.98); }
   </style>
 </head>
 <body>
-  <div class="phone">
-    <div class="header">
-      <div class="logoMark" aria-hidden="true"><span>🚗</span></div>
-      <div class="brand">FindMy<span class="spot">Spot</span></div>
+  <div class="container">
+    <h1>🚗 FindMySpot</h1>
+    
+    <div class="tab-buttons">
+      <button class="tab-btn active" data-tab="find">FIND VEHICLE</button>
+      <button class="tab-btn" data-tab="checkin">CHECK IN</button>
     </div>
 
-    <div class="tabs">
-      <button id="tabFind" class="tab active" onclick="switchTab('find')">FIND MY VEHICLE</button>
-      <button id="tabCheck" class="tab" onclick="switchTab('checkin')">CHECK IN VEHICLE</button>
-    </div>
-
-    <!-- FIND SCREEN -->
-    <div id="viewFind" class="screen">
-      <div class="titleRow">
-        <div class="carIcon">🚘</div>
-        <div>
-          <p class="h1">LOCATE YOUR VEHICLE</p>
-          <p class="sub">Enter your license plate number to find your parking location.</p>
-        </div>
+    <!-- FIND VEHICLE TAB -->
+    <div id="find" class="tab active">
+      <div class="form-group">
+        <label>License Plate</label>
+        <input type="text" id="findPlate" placeholder="DONOTASK" autocomplete="off">
       </div>
-
-      <div class="form">
-        <label class="label">LICENSE PLATE NUMBER</label>
-        <input id="findPlate" class="input" placeholder="ABCD123" autocomplete="off" />
-
-        <button id="btnFind" class="btn" onclick="findVehicle()">
-          🔍 <span>FIND VEHICLE</span>
-        </button>
-
-        <div id="findMsg" class="toast hidden"></div>
-
-        <div class="footerBar">
-          <div class="footerItem"><span class="pillDot"></span> Need Help? <strong>(123) 4567-1010</strong></div>
-          <div class="footerItem"><span class="badge">AI-Powered Security</span></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- CHECK-IN SCREEN -->
-    <div id="viewCheckin" class="screen hidden">
-      <div class="titleRow">
-        <div class="carIcon">🚗</div>
-        <div>
-          <p class="h1">CHECK IN VEHICLE</p>
-          <p class="sub">In a real system, the camera will detect this automatically.</p>
+      <button onclick="findVehicle()">🔍 FIND VEHICLE</button>
+      <div id="findMsg" class="message"></div>
+      
+      <div id="findResult" class="result">
+        <h3>✅ Vehicle Found!</h3>
+        <div class="stat">
+          <div class="stat-box">
+            <div class="stat-label">Floor</div>
+            <div class="stat-value" id="resultFloor">—</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Spot</div>
+            <div class="stat-value" id="resultSpot">—</div>
+          </div>
         </div>
         <div id="resultMeta" style="color: #666; font-size: 14px; margin: 15px 0;"></div>
       </div>
@@ -429,80 +224,30 @@
         <label>License Plate</label>
         <input type="text" id="checkPlate" placeholder="DONOTASK" autocomplete="off">
       </div>
-    </div>
-
-    <!-- RESULT SCREEN -->
-    <div id="viewResult" class="screen hidden">
-      <div class="banner">Location Found!</div>
-
-      <div class="bigStat">
-        <div class="k">FLOOR</div>
-        <p id="resFloor" class="v">—</p>
-
-        <div class="k">PARKING SPOT</div>
-        <p id="resSpot" class="v">—</p>
+      <div class="form-group">
+        <label>Floor</label>
+        <input type="number" id="checkFloor" placeholder="2" min="1" max="5" autocomplete="off">
       </div>
-
-      <div id="resMeta" class="meta"></div>
-
-      <div class="map" aria-label="Map preview">
-        <svg viewBox="0 0 800 420" width="100%" height="240" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <linearGradient id="g" x1="0" x2="1" y1="0" y2="1">
-              <stop offset="0" stop-color="#cfe8d8"/>
-              <stop offset="1" stop-color="#eaf2ef"/>
-            </linearGradient>
-          </defs>
-          <rect x="0" y="0" width="800" height="420" fill="url(#g)"/>
-          <g stroke="#8aa6a1" stroke-width="18" opacity="0.9" stroke-linecap="round">
-            <path d="M60 70 H740"/>
-            <path d="M120 160 H700"/>
-            <path d="M80 260 H740"/>
-            <path d="M180 350 H720"/>
-            <path d="M140 40 V390"/>
-            <path d="M300 30 V400"/>
-            <path d="M460 40 V390"/>
-            <path d="M620 30 V400"/>
-          </g>
-          <g opacity="0.85">
-            <rect x="165" y="95" width="110" height="55" rx="12" fill="#b8d7c6"/>
-            <rect x="325" y="95" width="110" height="55" rx="12" fill="#b8d7c6"/>
-            <rect x="485" y="95" width="110" height="55" rx="12" fill="#b8d7c6"/>
-            <rect x="645" y="95" width="70" height="55" rx="12" fill="#b8d7c6"/>
-
-            <rect x="165" y="190" width="110" height="55" rx="12" fill="#b8d7c6"/>
-            <rect x="325" y="190" width="110" height="55" rx="12" fill="#b8d7c6"/>
-            <rect x="485" y="190" width="110" height="55" rx="12" fill="#b8d7c6"/>
-            <rect x="645" y="190" width="70" height="55" rx="12" fill="#b8d7c6"/>
-
-            <rect x="165" y="290" width="110" height="55" rx="12" fill="#b8d7c6"/>
-            <rect x="325" y="290" width="110" height="55" rx="12" fill="#b8d7c6"/>
-            <rect x="485" y="290" width="110" height="55" rx="12" fill="#b8d7c6"/>
-            <rect x="645" y="290" width="70" height="55" rx="12" fill="#b8d7c6"/>
-          </g>
-
-          <g transform="translate(410,210)">
-            <circle cx="0" cy="-12" r="18" fill="#ff4d4d" stroke="#b51f1f" stroke-width="6"/>
-            <path d="M0 10 C-20 -10 -20 -40 0 -55 C20 -40 20 -10 0 10 Z"
-                  fill="#ff4d4d" opacity="0.95"/>
-            <circle cx="0" cy="-12" r="7" fill="#fff"/>
-          </g>
-
-          <text x="24" y="400" font-size="22" fill="#355a56" font-weight="800">
-            Map preview (placeholder)
-          </text>
-        </svg>
+      <div class="form-group">
+        <label>Spot</label>
+        <input type="text" id="checkSpot" placeholder="F2-S1" autocomplete="off">
       </div>
-
-      <button class="directionsBtn" onclick="getDirections()">Get Directions</button>
-      <div id="resultMsg" class="toast hidden"></div>
+      <button onclick="checkIn()">✓ CHECK IN</button>
+      <div id="checkinMsg" class="message"></div>
     </div>
   </div>
 
   <script>
-    const API_BASE_URL = "http://localhost:5000";
-    function normalizePlate(p){
-      return (p || "").trim().toUpperCase().replace(/\s+/g, "");
+    const API_BASE_URL = "http://localhost:3000";
+    const LOCAL_VEHICLES_KEY = "fms_savedVehicles";
+    const LOCAL_HISTORY_KEY = "fms_parkingHistory";
+
+    function currentUser() {
+      return localStorage.getItem("fms_currentUser") || "";
+    }
+
+    function normalizePlate(plate) {
+      return String(plate || "").trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
     }
 
     function getLocalVehicles() {
@@ -554,145 +299,25 @@
       localStorage.setItem(LOCAL_HISTORY_KEY, JSON.stringify(items));
     }
 
-    function toast(el, text, type){
-      el.textContent = text;
-      el.classList.remove("hidden","ok","err");
-      if(type === "ok") el.classList.add("ok");
-      if(type === "err") el.classList.add("err");
-    }
-<<<<<<< HEAD
-    function clearToast(elId){
-      const el = document.getElementById(elId);
-      el.classList.add("hidden");
-      el.classList.remove("ok","err");
-      el.textContent = "";
-    }
-    function showOnly(viewId){
-      const views = ["viewLogin","viewSignup","viewFind","viewCheckin","viewLoading","viewResult"];
-      for(const v of views){
-        document.getElementById(v).classList.toggle("hidden", v !== viewId);
-      }
-    }
-    function renderAuthUI(){
-      const email = currentUser();
-      const tabs = document.getElementById("tabsBar");
-      const btn = document.getElementById("headerAuthBtn");
-      if(email){
-        const u = usersGet()[email];
-        const label = u?.name ? u.name.split(" ")[0] : email.split("@")[0];
-        btn.textContent = `Logout`;
-        tabs.classList.remove("hidden");
-        const onAuth = !document.getElementById("viewLogin").classList.contains("hidden") ||
-                       !document.getElementById("viewSignup").classList.contains("hidden");
-        if(onAuth){
-          switchTab("find");
-        }
-      }else{
-        btn.textContent = "Sign In";
-        tabs.classList.add("hidden");
-        showOnly("viewLogin");
-      }
-    }
-    function headerAuthAction(){
-      if(currentUser()){
-        setCurrentUser("");
-      }else{
-        goLogin();
-      }
-    }
-    function goSignup(){
-      clearToast("loginMsg");
-      showOnly("viewSignup");
-    }
-    function goLogin(){
-      clearToast("signupMsg");
-      showOnly("viewLogin");
-    }
-    function forgotPassword(){
-      toast("loginMsg", "Forgot password placeholder.\n(Connect to email reset endpoint later.)", "ok");
-    }
-    function doSignup(){
-      clearToast("signupMsg");
-      const name = (document.getElementById("suName").value || "").trim();
-      const email = (document.getElementById("suEmail").value || "").trim().toLowerCase();
-      const pw1 = document.getElementById("suPass").value || "";
-      const pw2 = document.getElementById("suPass2").value || "";
-      if(!name || !email || !pw1 || !pw2){
-        toast("signupMsg", "Please fill in all fields.", "err");
-        return;
-      }
-      if(pw1.length < 6){
-        toast("signupMsg", "Password must be at least 6 characters.", "err");
-        return;
-      }
-      if(pw1 !== pw2){
-        toast("signupMsg", "Passwords do not match.", "err");
-        return;
-      }
-      const users = usersGet();
-      if(users[email]){
-        toast("signupMsg", "Account already exists for this email.", "err");
-        return;
-      }
+    function appendLocalParkingHistory(token, plate, floor, lot) {
+      const normalized = normalizePlate(plate);
+      if (!token || !normalized) return;
 
-      users[email] = { name, email, password: pw1 };
-      usersSet(users);
-      setCurrentUser(email);
-      toast("signupMsg", "Account created! Signing you in...", "ok");
-      setTimeout(() => {
-        switchTab("find");
-      }, 600);
-    }
+      const history = getLocalParkingHistory();
+      history.unshift({
+        source: "local",
+        token,
+        vehicle_name: normalized,
+        license_plate: normalized,
+        floor,
+        lot,
+        spot_number: `F${floor}-S${lot}`,
+        parking_area: `Floor ${floor}`,
+        check_in_time: new Date().toISOString(),
+        check_out_time: null
+      });
 
-    function doLogin(){
-      clearToast("loginMsg");
-      const email = (document.getElementById("loginEmail").value || "").trim().toLowerCase();
-      const pw = document.getElementById("loginPassword").value || "";
-      if(!email || !pw){
-        toast("loginMsg", "Please enter your email and password.", "err");
-        return;
-      }
-      const users = usersGet();
-      const u = users[email];
-      if(!u || u.password !== pw){
-        toast("loginMsg", "Invalid email or password.", "err");
-        return;
-      }
-      setCurrentUser(email);
-      toast("loginMsg", "Signed in successfully!", "ok");
-      setTimeout(() => {
-        switchTab("find");
-      }, 500);
-    }
-    function normalizePlate(p){
-      return (p || "").trim().toUpperCase().replace(/\s+/g, "");
-    }
-    function switchTab(which){
-      // auth gate
-      if(!currentUser()){
-        showOnly("viewLogin");
-        return;
-      }
-
-      document.getElementById("tabFind").classList.toggle("active", which === "find");
-      document.getElementById("tabCheck").classList.toggle("active", which === "checkin");
-      showOnly(which === "find" ? "viewFind" : "viewCheckin");
-      clearMessages();
-    }
-
-    function clearMessages(){
-      const ids = ["findMsg","checkMsg","resultMsg"];
-      for(const id of ids){
-        const el = document.getElementById(id);
-        el.classList.add("hidden");
-        el.classList.remove("ok","err");
-        el.textContent = "";
-      }
-    }
-
-    function setBusy(buttonId, busy){
-      const btn = document.getElementById(buttonId);
-      btn.disabled = !!busy;
+      setLocalParkingHistory(history.slice(0, 500));
     }
 
     async function safeJson(response) {
@@ -704,18 +329,8 @@
       }
     }
 
-    async function checkIn(){
-      clearMessages();
-
-      const plate = normalizePlate(document.getElementById("checkPlate").value);
-      const floor = (document.getElementById("checkFloor").value || "").trim();
-      const spot  = (document.getElementById("checkSpot").value  || "").trim().toUpperCase();
-      const msg = document.getElementById("checkMsg");
-
-      if(!plate || !floor || !spot){
-        toast(msg, "Please fill: plate, floor, and spot.", "err");
-        return;
-      }
+    async function ensureVehicleRegistered(token, plate) {
+      if (!token || !plate) return;
 
       upsertLocalVehicle(token, plate);
 
@@ -787,26 +402,25 @@
           return;
         }
 
-        toast(msg, data.message || `Checked in ${plate} successfully.`, "ok");
-      }catch(e){
-        toast(msg, "Backend not reachable. Make sure the server is running and CORS is enabled.", "err");
-      }finally{
-        setBusy("btnCheckin", false);
+        // Display results
+        const vehicleData = data.data || {};
+        document.getElementById('resultFloor').textContent = vehicleData.floor || '—';
+        document.getElementById('resultSpot').textContent = vehicleData.spotNumber || vehicleData.lot || '—';
+        
+        const parkedTime = vehicleData.parkedSince ? new Date(vehicleData.parkedSince).toLocaleString() : 'Unknown';
+        document.getElementById('resultMeta').innerHTML = `
+          <strong>${vehicleData.vehiclePlate || plate}</strong><br>
+          Parked: ${parkedTime}
+        `;
+
+        document.getElementById('findResult').classList.add('show');
+        showMessage('findMsg', '✅ Vehicle found!', 'success');
+      } catch (error) {
+        console.error('Error:', error);
+        document.getElementById('findLoading').classList.remove('show');
+        showMessage('findMsg', `❌ Backend error: ${error.message}`, 'error');
       }
     }
-<<<<<<< HEAD
-    async function findVehicle(){
-      if(!currentUser()){
-        showOnly("viewLogin");
-        return;
-      }
-      clearMessages();
-      const plate = normalizePlate(document.getElementById("findPlate").value);
-      const msg = document.getElementById("findMsg");
-      if(!plate){
-        msg.textContent = "Please enter a license plate number.";
-        msg.classList.remove("hidden"); msg.classList.add("err");
-=======
 
     async function checkIn() {
       const plate = normalizePlate(document.getElementById("checkPlate").value || "");
@@ -814,49 +428,46 @@
       const spot = (document.getElementById("checkSpot").value || "").trim();
       const token = currentUser();
 
-      if(!plate){
-        toast(msg, "Please enter a license plate number.", "err");
+      if (!plate || !floor || !spot) {
+        showMessage('checkinMsg', '❌ Please fill all fields', 'error');
         return;
       }
 
-      setBusy("btnFind", true);
-      showOnly("viewLoading");
+      hideMessage('checkinMsg');
 
-      try{
-        const res = await fetch(`${API_BASE_URL}/api/vehicle?plate=${encodeURIComponent(plate)}`);
-        const data = await safeJson(res);
+      try {
+        await ensureVehicleRegistered(token, plate);
+        appendLocalParkingHistory(token, plate, floor, spot);
+
+        const response = await fetch(`${API_BASE_URL}/api/detection/record`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            licensePlate: plate,
+            floor: parseInt(floor),
+            lot: spot,
+            eventType: 'ENTRY',
+            location: `Floor ${floor}, Spot ${spot}`,
+            cameraId: 'MANUAL_ENTRY'
+          })
+        });
+
+        const data = await response.json();
 
         if (!response.ok) {
           showMessage('checkinMsg', `⚠️ Saved to My Vehicles & History, but check-in failed: ${data.message || 'Unknown error'}`, 'error');
           return;
         }
 
-        document.getElementById("resFloor").textContent = data.floor ?? "—";
-        document.getElementById("resSpot").textContent  = data.spot  ?? "—";
-
-        const parkedSince = data.parkedSince ? new Date(data.parkedSince).toLocaleString() : "Unknown";
-
-        document.getElementById("resMeta").innerText =
-          `License Plate: ${data.plate || plate}\n` +
-          `Parked Since: ${parkedSince}\n` +
-          `Follow the navigation to your vehicle.`;
-
-        showOnly("viewResult");
-      }catch(e){
-        showOnly("viewFind");
-        toast(msg, "Backend not reachable. Make sure the server is running and CORS is enabled.", "err");
-      }finally{
-        setBusy("btnFind", false);
+        showMessage('checkinMsg', `✅ Checked in ${plate} at Floor ${floor}, ${spot}`, 'success');
+        document.getElementById("checkPlate").value = '';
+        document.getElementById("checkFloor").value = '';
+        document.getElementById("checkSpot").value = '';
+      } catch (error) {
+        console.error('Error:', error);
+        showMessage('checkinMsg', `❌ Backend error: ${error.message}`, 'error');
       }
     }
-
-    function getDirections(){
-      const msg = document.getElementById("resultMsg");
-      toast(msg, "Directions placeholder. Later connect to Google Maps / Apple Maps.", "ok");
-    }
-
-    // Start
-    switchTab("find");
   </script>
 </body>
 </html>
