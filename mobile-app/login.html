@@ -31,96 +31,95 @@
         <div class="rowEnd">
           <button class="linkBtn" onclick="forgotPassword()">Forgot password?</button>
         </div>
-
         <button id="btnLogin" class="btn" onclick="doLogin()">Sign In</button>
-
         <div class="dividerLine"></div>
-
         <a href="signup.html" class="btnGhost">Create Account</a>
-
         <div id="loginMsg" class="toast hidden"></div>
       </div>
-
       <div class="footerNote">Your saved parking records are private.</div>
     </div>
   </div>
-
+  <script src="AuthState.js"></script>
   <script>
     const API_BASE_URL = "http://localhost:3000";
-
-    function clearAndReload(){
+    const LoginPage = {
+      currentState: new IdleState(),
+      setState(state) {
+        this.currentState = state;
+        this.currentState.render(this, "loginMsg");
+      },
+      toast(elId, text, type) {
+        const el = document.getElementById(elId);
+        el.textContent = text;
+        el.classList.remove("hidden", "ok", "err");
+        if (type === "ok") el.classList.add("ok");
+        if (type === "err") el.classList.add("err");
+      }
+    };
+    function clearAndReload() {
       localStorage.removeItem("fms_currentUser");
       localStorage.removeItem("fms_userName");
       document.getElementById("loginEmail").value = "";
       document.getElementById("loginPassword").value = "";
-      document.getElementById("loginMsg").classList.add("hidden");
+      LoginPage.setState(new IdleState());
       document.getElementById("loginEmail").focus();
     }
-
-    function currentUser(){ return localStorage.getItem("fms_currentUser") || ""; }
-    function setCurrentUser(token){ 
-      if(token) localStorage.setItem("fms_currentUser", token);
+    function currentUser() {
+      return localStorage.getItem("fms_currentUser") || "";
+    }
+    function setCurrentUser(token) {
+      if (token) localStorage.setItem("fms_currentUser", token);
       else localStorage.removeItem("fms_currentUser");
     }
-    function getUserName(){ return localStorage.getItem("fms_userName") || ""; }
-    function setUserName(name){ localStorage.setItem("fms_userName", name); }
-
-    function toast(elId, text, type){
-      const el = document.getElementById(elId);
-      el.textContent = text;
-      el.classList.remove("hidden","ok","err");
-      if(type === "ok") el.classList.add("ok");
-      if(type === "err") el.classList.add("err");
+    function getUserName() {
+      return localStorage.getItem("fms_userName") || "";
     }
-
-    function forgotPassword(){
-      toast("loginMsg", "Forgot password placeholder.\n(Connect to email reset endpoint later.)", "ok");
+    function setUserName(name) {
+      localStorage.setItem("fms_userName", name);
     }
-
-
-    async function doLogin(){
-      const loginMsg = document.getElementById("loginMsg");
-      loginMsg.classList.add("hidden");
-      
+    function forgotPassword() {
+      LoginPage.toast(
+        "loginMsg",
+        "Forgot password placeholder.\n(Connect to email reset endpoint later.)",
+        "ok"
+      );
+    }
+    async function doLogin() {
       const email = (document.getElementById("loginEmail").value || "").trim().toLowerCase();
       const pw = document.getElementById("loginPassword").value || "";
-      
-      if(!email || !pw){
-        toast("loginMsg", "Please enter your email and password.", "err");
+      if (!email || !pw) {
+        LoginPage.setState(new ErrorState("Please enter your email and password."));
         return;
       }
-
+      LoginPage.setState(new LoadingScreen());
       try {
         const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
-          method: 'POST',
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json'
+            "Content-Type": "application/json"
           },
           body: JSON.stringify({
             email: email,
             password: pw
           })
         });
-
         const data = await response.json();
-
-        if(!response.ok){
-          toast("loginMsg", data.message || "Login failed", "err");
+        if (!response.ok) {
+          LoginPage.setState(new ErrorState(data.message || "Login failed"));
           return;
         }
-
         setCurrentUser(data.data.token);
         setUserName(data.data.name);
-        toast("loginMsg", "Signed in successfully! Redirecting...", "ok");
-        
+        LoginPage.setState(new SuccessState("Signed in successfully! Redirecting..."));
         setTimeout(() => {
           window.location.href = "index.html";
         }, 800);
-      } catch(error) {
+      } catch (error) {
         console.error("Login error:", error);
-        toast("loginMsg", "Connection error. Make sure backend is running.", "err");
+        LoginPage.setState(new ErrorState("Connection error. Make sure backend is running."));
       }
     }
+    LoginPage.setState(new IdleState());
   </script>
 </body>
 </html>
