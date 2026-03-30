@@ -112,10 +112,10 @@ def signup():
                 'error': 'Please provide name, email, and password'
             }), 400
         
-        if len(password) < 6:
+        if len(password) < 8:
             return jsonify({
                 'success': False,
-                'error': 'Password must be at least 6 characters'
+                'error': 'Password must be at least 8 characters'
             }), 400
         
         # Create username from name (e.g., "John Doe" -> "john_doe")
@@ -346,8 +346,8 @@ def checkin_vehicle():
         }), 500
 
 
-@app.route('/api/vehicle/find', methods=['POST'])
-def find_vehicle():
+@app.route('/api/vehicle/find/<plate>', methods=['GET'])
+def find_vehicle(plate):
     """
     Find vehicle parking location by plate number
     
@@ -372,46 +372,34 @@ def find_vehicle():
         # Get user from token
         user_id = get_user_from_token()
         if not user_id:
-            return jsonify({
-                'success': False,
-                'error': 'Unauthorized. Please log in.'
-            }), 401
-        
-        data = request.get_json()
-        
-        plate = data.get('plate', '').strip().upper().replace(' ', '')
-        
-        if not plate:
-            return jsonify({
-                'success': False,
-                'error': 'Please enter a license plate number'
-            }), 400
-        
-        # Find vehicle for this user
+            return jsonify({'success': False, 'error': 'Unauthorized'}), 401
+
+        plate = plate.strip().upper().replace(' ', '')
+
         vehicle = vehicle_db.get_vehicle_by_plate(plate, user_id)
-        
-        if not vehicle:
-            return jsonify({
-                'success': False,
-                'error': 'Vehicle not found'
-            }), 404
-        
-        # Check if vehicle has parking location
-        if not vehicle.get('floor') or not vehicle.get('spot'):
-            return jsonify({
-                'success': False,
-                'error': 'No parking location found for this vehicle'
-            }), 404
-        
-        logger.info(f"User {user_id} found vehicle {plate}")
-        
+
+        if not vehicle or not vehicle.get('floor') or not vehicle.get('spot'):
+            return jsonify({'success': False, 'error': 'Vehicle not found'}), 404
+
         return jsonify({
             'success': True,
-            'floor': vehicle['floor'],
-            'spot': vehicle['spot'],
-            'plate': vehicle['license_plate'],
-            'parkedSince': vehicle['updated_at'].isoformat() if vehicle.get('updated_at') else datetime.now().isoformat()
+            'data': {
+                'vehiclePlate': vehicle['license_plate'],
+                'floor': vehicle['floor'],
+                'lot': vehicle['spot'],
+                'spotNumber': f"F{vehicle['floor']}-S{vehicle['spot']}",
+                'area': f"Floor {vehicle['floor']}",
+                'locationDescription': f"Floor {vehicle['floor']}, Spot {vehicle['spot']}",
+                'parkedSince': vehicle['updated_at'].isoformat() if vehicle.get('updated_at') else datetime.now().isoformat()
+            },
+            'preciseSpotAvailable': True,
+            'navigationAvailable': False
         }), 200
+
+    except Exception as e:
+        logger.error(f"Find vehicle error: {e}")
+        return jsonify({'success': False, 'error': 'Lookup failed.'}), 500
+
         
     except Exception as e:
         logger.error(f"Find vehicle error: {e}")

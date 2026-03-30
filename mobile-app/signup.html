@@ -42,7 +42,7 @@
   </div>
 
   <script>
-    const API_BASE_URL = "http://localhost:3000";
+    const API_BASE_URL = "http://localhost:5000";
 
     function currentUser(){ return localStorage.getItem("fms_currentUser") || ""; }
     function setCurrentUser(token){ 
@@ -74,8 +74,8 @@
         toast("signupMsg", "Please fill in all fields.", "err");
         return;
       }
-      if(pw1.length < 6){
-        toast("signupMsg", "Password must be at least 6 characters.", "err");
+      if(pw1.length < 8){
+        toast("signupMsg", "Password must be at least 8 characters.", "err");
         return;
       }
       if(pw1 !== pw2){
@@ -84,7 +84,7 @@
       }
 
       try {
-        const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
+        const response = await fetch(`${API_BASE_URL}/api/auth/signup`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -103,8 +103,8 @@
           return;
         }
 
-        setCurrentUser(data.data.token);
-        setUserName(data.data.name);
+        setCurrentUser(data.token);
+        setUserName(data.user.name || name);
         toast("signupMsg", "Account created! Signing you in...", "ok");
         
         setTimeout(() => {

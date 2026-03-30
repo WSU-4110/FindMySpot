@@ -7,6 +7,7 @@ CREATE TABLE users (
     role VARCHAR(20) DEFAULT 'user', -- 'admin' or 'user'
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     last_login TIMESTAMP
+    
 );
 
 -- Cameras table
