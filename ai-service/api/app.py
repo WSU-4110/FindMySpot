@@ -24,7 +24,7 @@ reader = easyocr.Reader(['en'], gpu=False)
 # Load camera configuration
 def load_camera_config():
     """Load camera configuration from camera_config.json"""
-    config_path = os.path.join(os.path.dirname(__file__), '..', '..', 'camera_config.json')
+    config_path = os.path.join(os.path.dirname(__file__), 'camera_config.json')
     try:
         with open(config_path, 'r') as f:
             config = json.load(f)
@@ -214,6 +214,66 @@ def find_plate_candidates(gray_frame):
 
     return candidates
 
+
+def clean_ocr_text(text):
+    """
+    Strip all non-alphanumeric characters from raw OCR text and uppercase it.
+
+    This normalises messy OCR output (e.g. 'A-BC 12 3' → 'ABC123') before
+    any plate-validation logic is applied.
+
+    Args:
+        text (str): Raw string returned by the OCR engine.
+
+    Returns:
+        str: Uppercase string containing only A-Z and 0-9 characters.
+    """
+    return re.sub(r'[^A-Z0-9]', '', text.upper())
+
+
+def is_valid_plate(cleaned_text):
+    """
+    Return True when cleaned_text looks like a plausible license plate.
+
+    Validation rules
+    ----------------
+    1. Must match the regex [A-Z0-9]{4,8}  (4–8 alphanumeric characters).
+    2. Must NOT appear in blocked_words  (state names, abbreviations, etc.).
+
+    Args:
+        cleaned_text (str): Already-cleaned OCR text (output of clean_ocr_text).
+
+    Returns:
+        bool: True if the text passes both checks, False otherwise.
+    """
+    if cleaned_text in blocked_words:
+        return False
+    if not re.fullmatch(r'[A-Z0-9]{4,8}', cleaned_text):
+        return False
+    return True
+
+
+def is_cooldown_active(plate, last_plate, finalized_at, current_time, cooldown_seconds):
+    """
+    Return True when the same plate was recently confirmed and the cooldown
+    period has not yet expired.
+
+    This prevents the same vehicle from triggering duplicate check-in events
+    every time the detection window closes.
+
+    Args:
+        plate          (str):   Newly detected consensus plate.
+        last_plate     (str):   Most recently finalised plate string.
+        finalized_at   (float): Unix timestamp when last_plate was finalised.
+        current_time   (float): Current Unix timestamp.
+        cooldown_seconds (float): Minimum gap (seconds) between repeat detections.
+
+    Returns:
+        bool: True if the cooldown is still active, False if a new event can fire.
+    """
+    return plate == last_plate and (current_time - finalized_at) < cooldown_seconds
+
+
 # FIXED: Initialize camera configuration and floor/lot from config file
 if CAMERA_CONFIG:
     cameras = CAMERA_CONFIG.get('cameras', [])
@@ -274,10 +334,8 @@ while True:
             )
 
             for _, text, confidence in ocr_results:
-                cleaned = re.sub(r'[^A-Z0-9]', '', text.upper())
-                if cleaned in blocked_words:
-                    continue
-                if not re.fullmatch(r'[A-Z0-9]{4,8}', cleaned):
+                cleaned = clean_ocr_text(text)
+                if not is_valid_plate(cleaned):
                     continue
                 if confidence < min_confidence:
                     continue
@@ -303,9 +361,9 @@ while True:
             most_common = Counter(window_detections).most_common(1)
             if most_common:
                 consensus_plate, hits = most_common[0]
-                cooldown_active = (
-                    consensus_plate == last_printed_plate
-                    and (current_time - finalized_at) < cooldown_seconds
+                cooldown_active = is_cooldown_active(
+                    consensus_plate, last_printed_plate,
+                    finalized_at, current_time, cooldown_seconds
                 )
                 if hits >= min_votes and not cooldown_active:
                     last_printed_plate = consensus_plate
@@ -318,7 +376,7 @@ while True:
                     
                     timestamp = time.strftime("%H:%M:%S")
                     print(
-                        f"[{timestamp}] License plate detected: {consensus_plate} | Floor {assigned_floor} | Lot {assigned_lot}",
+                        f"[{timestamp}] License plate finalized: {consensus_plate} | Floor {assigned_floor} | Lot {assigned_lot}",
                         flush=True,
                     )
                     
