@@ -66,10 +66,9 @@ Detection POST -> Node.js / Express API -> PostgreSQL
         |                    +-> business logic/controllers/models
         |
         +-> static frontend pages consume backend endpoints
-
-### Main runtime pieces
 ```
 
+### Main runtime pieces
 
 #### 1. Backend API (`backend/`)
 The backend is the system’s core service. It:
