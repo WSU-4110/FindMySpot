@@ -17,7 +17,7 @@ The backend also exposes parking statistics, occupancy-related endpoints, securi
 
 ## Repository Status Notes
 
-This repository currently contains a few implementation details that are important for anyone reading or extending it:
+This repository includes several implementation details to support development and testing:
 
 - The backend is implemented with **Express** and the committed dependency list includes `express`, `cors`, `dotenv`, and `pg`.
 - The checked-in `mobile-app/` folder is currently a **static HTML/CSS frontend** rather than a React Native codebase.
@@ -116,7 +116,7 @@ FindMySpot/
 │   ├── models/           # YOLO model files
 │   ├── ocr/              # License plate OCR
 │   └── api/              # Flask API
-├── mobile-app/           # React Native app
+├── mobile-app/           # Static HTML/CSS/JS frontend
 │   ├── screens/          # App screens
 │   ├── components/       # Reusable components
 │   └── services/         # API calls
