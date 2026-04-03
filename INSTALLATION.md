@@ -10,7 +10,6 @@ It is written to match the repository as it exists now, including:
 
 ---
 ## Quick Start (Recommended)
-
 For a fast setup:
 1. Clone the repository  
 2. Create the PostgreSQL database  
@@ -26,7 +25,6 @@ See detailed steps below for full setup.
 ## 1. Prerequisites
 
 Install the following first:
-
 ### Required software
 - **Git**
 - **Node.js** 16+
