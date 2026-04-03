@@ -1,7 +1,7 @@
 # FindMySpot
 
 FindMySpot is an intelligent parking management system designed to help users locate their vehicles within parking structures using AI-powered license plate recognition. The system automatically scans and records a vehicle’s location when it is parked, allowing users to quickly retrieve their parking spot and directions by searching their plate number. The project integrates a Node.js/Express backend, a PostgreSQL database, a Python-based computer vision pipeline, and a lightweight browser/mobile-style frontend to deliver a seamless and efficient parking experience.
----
+
 ## Overview
 
 When a vehicle enters or moves through a monitored parking area, the camera pipeline reads the plate, associates it with a configured camera location, and reports the detection to the backend. Users can then:
@@ -14,7 +14,7 @@ When a vehicle enters or moves through a monitored parking area, the camera pipe
 - fall back to manual workflows when automatic recognition is unavailable
 
 The backend also exposes parking statistics, occupancy-related endpoints, security scanning endpoints, and notification APIs.
----
+
 ## Repository Status Notes
 
 This repository includes several implementation details to support development and testing:
@@ -24,7 +24,7 @@ This repository includes several implementation details to support development a
 - The root-level `app.py` is the active camera/OCR script in the repository. It uses **OpenCV** and **EasyOCR** and posts detection data to the backend.
 - The `ai-service/` directory contains a reusable Python integration service (`detection_service.py`) plus its own requirements file and tests.
 - The repository includes a tracked `backend/.env` file and `backend/node_modules/`, which is not typical for production repositories. For portability and security, local setups should still rely on `backend/.env.example` and a fresh dependency install.
----
+
 ## Core Features
 
 ### User and account features
@@ -54,7 +54,7 @@ This repository includes several implementation details to support development a
 - Notification deletion
 - Security flag retrieval
 - Security scan endpoint for suspicious or overstayed vehicles
----
+
 ## High-Level Architecture
 
 ```
@@ -101,7 +101,7 @@ Despite the folder name, this part of the repo currently contains browser-delive
 - `history.html`
 - `terms.html`
 - `style.css`
----
+
 ## Project Structure
 
 ```
@@ -124,7 +124,7 @@ FindMySpot/
 └── docs/                 # Documentation
 ```
 
----
+
 ## Backend API Summary
 
 The backend root endpoint documents the API groups below.
@@ -165,7 +165,7 @@ The backend root endpoint documents the API groups below.
 - `GET /api/parking/reports/usage?hoursBack=24`
 - `GET /api/parking/security/flags`
 - `POST /api/parking/security/scan?maxDurationHours=24`
----
+
 ## How Detection Works
 
 ### Live camera path
@@ -178,11 +178,11 @@ The backend root endpoint documents the API groups below.
 
 ### Simulated path
 `ai-service/detection_service.py` can simulate detections for test plates and submit them to the same backend detection endpoint.
----
+
 ## Camera Configuration
 
 The repository includes `camera_config.json` with camera IDs `0` through `9`. Each camera is mapped to a specific floor and lot, covering floors 1 through 5 with two lot positions per floor. This lets the OCR pipeline assign real parking metadata based on which camera is running, instead of using random floor/lot values.
----
+
 ## Environment Configuration
 The backend `.env.example` defines:
 DB_HOST=localhost
@@ -222,7 +222,7 @@ Then open the appropriate page in a browser.
 
 ### End-to-end verification
 python test_system.py
----
+
 ## Testing
 The repository includes:
 - `test_system.py` for API-level integration/system checks
@@ -239,7 +239,7 @@ Before running tests, make sure:
 - PostgreSQL is running
 - the backend server is running on port 3000
 - required schema exists
----
+
 ## Team
 - Asmita Bhandari
 - Mirza Sneha
