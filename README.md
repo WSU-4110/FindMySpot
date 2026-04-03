@@ -57,6 +57,7 @@ This repository currently contains a few implementation details that are importa
 
 ## High-Level Architecture
 
+```
 Camera / CV Pipeline (Python)
         |
         v
@@ -67,6 +68,8 @@ Detection POST -> Node.js / Express API -> PostgreSQL
         +-> static frontend pages consume backend endpoints
 
 ### Main runtime pieces
+```
+
 
 #### 1. Backend API (`backend/`)
 The backend is the system’s core service. It:
@@ -102,6 +105,8 @@ Despite the folder name, this part of the repo currently contains browser-delive
 
 ## Project Structure
 
+```
+
 FindMySpot/
 ├── backend/              # Node.js API server
 │   ├── routes/           # API endpoints
@@ -118,6 +123,7 @@ FindMySpot/
 │   └── services/         # API calls
 ├── database/             # Database schemas & migrations
 └── docs/                 # Documentation
+```
 
 
 ## Backend API Summary
