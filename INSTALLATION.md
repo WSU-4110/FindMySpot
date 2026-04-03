@@ -52,7 +52,6 @@ cd FindMySpot
 ## 3. Review the Important Runtime Pieces
 
 Before installing, know which parts of the repo are actually used:
-
 ### Backend
 Location: `backend/`
 - Express server
@@ -68,7 +67,6 @@ Location: `database/migrations/`
 
 ### Python detection code
 There are two Python-related components:
-
 1. **Root `app.py`**
    - live OCR/camera pipeline
    - OpenCV + EasyOCR
@@ -90,7 +88,6 @@ Location: `mobile-app/`
 
 ### Create the database
 Open PostgreSQL and create a database named `findmyspot`.
-
 Example:
 
 ```bash
@@ -104,7 +101,6 @@ If the database already exists, PostgreSQL will warn you. That is fine.
 ## 5. Run the Database Migrations
 
 The repo contains three migration files in `database/migrations/`.
-
 ### Option A: use the provided Windows helper
 From the project root:
 
@@ -120,13 +116,11 @@ setup-database.bat
 
 ### Option B: run migrations manually
 If you prefer to run them yourself, apply these SQL files in order:
-
 1. `database/migrations/001_init.sql`
 2. `database/migrations/002_license_plate_detection.sql`
 3. `database/migrations/003_security_flags.sql`
 
 Example:
-
 ```bash
 psql -U postgres -d findmyspot -f database/migrations/001_init.sql
 psql -U postgres -d findmyspot -f database/migrations/002_license_plate_detection.sql
@@ -147,13 +141,11 @@ Or inspect tables in pgAdmin.
 ## 6. Configure Backend Environment Variables
 
 Go into the backend directory:
-
 ```bash
 cd backend
 ```
 
 Create your local environment file from the template:
-
 ### macOS / Linux
 ```bash
 cp .env.example .env
@@ -175,7 +167,6 @@ PORT=3000
 ```
 
 Recommended for easier debugging:
-
 ```env
 NODE_ENV=development
 ```
@@ -185,7 +176,6 @@ NODE_ENV=development
 ## 7. Install Backend Dependencies
 
 Inside `backend/`:
-
 ```bash
 npm install
 ```
@@ -229,7 +219,6 @@ http://localhost:3000/health
 ```
 
 Expected result: JSON showing the API is running.
-
 #### Root endpoint
 ```text
 http://localhost:3000/
@@ -247,11 +236,9 @@ Expected result: JSON listing grouped endpoints for:
 ## 9. Install Python Dependencies
 
 Return to the repository root if needed, then install the Python requirements used by the AI-related code.
-
 ```bash
 pip install -r ai-service/requirements.txt
 ```
-
 The current requirements file includes:
 - `flask`
 - `flask-cors`
@@ -292,7 +279,6 @@ pip install -r ai-service/requirements.txt
 ## 10. Configure Camera Mapping
 
 The root OCR pipeline reads `camera_config.json`.
-
 This file maps camera IDs `0` through `9` to floors and lot numbers.
 
 Examples:
@@ -348,13 +334,11 @@ Press `q` in the OpenCV window.
 ## 12. Run the Detection Service Simulator (Optional)
 
 If you want to simulate plate detections instead of using a live camera, run:
-
 ```bash
 python ai-service/detection_service.py
 ```
 
 This utility sends example detection payloads to the backend detection endpoint.
-
 Use it when:
 - you want to test backend detection ingestion quickly
 - you do not have camera hardware available
@@ -373,7 +357,6 @@ python -m http.server 8080
 ```
 
 Then open pages such as:
-
 ```text
 http://localhost:8080/mobile-app/index.html
 http://localhost:8080/mobile-app/login.html
@@ -390,7 +373,6 @@ You can also `cd mobile-app` first and serve directly from there.
 ## 14. Run the System Test Script
 
 Once the backend and database are ready, run:
-
 ```bash
 python test_system.py
 ```
@@ -452,7 +434,6 @@ python test_system.py
 ## 16. Basic Verification Checklist
 
 Use this checklist after setup:
-
 ### Database
 - [ ] `findmyspot` database exists
 - [ ] all three migration files were applied
