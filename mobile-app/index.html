@@ -126,7 +126,7 @@
   </div><!-- /.phone -->
 
   <script>
-    const API_BASE_URL = "http://localhost:3000";
+    const API_BASE_URL = "http://localhost:5000";
     let notifPollHandle = null;
     let latestDirectionPayload = null;
     let latestLocatedPlate = null;
@@ -380,7 +380,7 @@
         db[plate] = { plate, floor, spot: lot, parkedSince: new Date().toISOString(), user: token };
         parkingSet(db);
 
-        const response = await fetch(`${API_BASE_URL}/api/detection/record`, {
+        const response = await fetch(`${API_BASE_URL}/api/vehicle/checkin`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -441,7 +441,7 @@
       showOnly("viewLoading");
 
       try{
-        const response = await fetch(`${API_BASE_URL}/api/parking/locate/${plate}`, {
+        const response = await fetch(`${API_BASE_URL}/api/vehicle/find/${encodeURIComponent(plate)}`, {
           headers: {
             'Authorization': `Bearer ${currentUser()}`
           }

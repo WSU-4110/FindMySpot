@@ -236,7 +236,7 @@
   </div>
 
   <script>
-    const API_BASE_URL = "http://localhost:3000";
+    const API_BASE_URL = "http://localhost:5000";
     const LOCAL_VEHICLES_KEY = "fms_savedVehicles";
 
     function normalizePlate(plate) {
@@ -277,7 +277,7 @@
       document.getElementById('findLoading').classList.add('show');
 
       try {
-        const response = await fetch(`${API_BASE_URL}/api/parking/locate/${encodeURIComponent(plate)}`);
+        const response = await fetch(`${API_BASE_URL}/api/vehicle/find/${encodeURIComponent(plate)}`);
         const data = await response.json();
         document.getElementById('findLoading').classList.remove('show');
 
@@ -312,7 +312,14 @@
       }
 
       try {
+<<<<<<< HEAD
+        await ensureVehicleRegistered(token, plate);
+        appendLocalParkingHistory(token, plate, floor, spot);
+
+        const response = await fetch(`${API_BASE_URL}/api/vehicle/checkin`, {
+=======
         const response = await fetch(`${API_BASE_URL}/api/detection/record`, {
+>>>>>>> bef3ead3623c9edc3503dd54c89a31fbe9e9b6b8
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
