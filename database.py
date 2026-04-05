@@ -1,8 +1,15 @@
+<<<<<<< HEAD
+=======
+"""
+database.py - PostgreSQL database operations for license plate detection
+"""
+>>>>>>> bef3ead3623c9edc3503dd54c89a31fbe9e9b6b8
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from datetime import datetime, timedelta
 from typing import List, Dict, Optional
 import os
+<<<<<<< HEAD
 import logging
 import time
 
@@ -16,12 +23,15 @@ logging.basicConfig(
     ]
 )
 logger = logging.getLogger(__name__)
+=======
+>>>>>>> bef3ead3623c9edc3503dd54c89a31fbe9e9b6b8
 
 
 class PlateDatabase:
     """Handle all database operations for license plates"""
     
     def __init__(self, 
+<<<<<<< HEAD
                  host: str = None,
                  port: int = None,
                  database: str = None,
@@ -45,6 +55,20 @@ class PlateDatabase:
             'database': database or os.getenv('DB_NAME', 'license_plate_db'),
             'user': user or os.getenv('DB_USER', 'postgres'),
             'password': password or os.getenv('DB_PASSWORD', 'postgres')
+=======
+                 host: str = "localhost",
+                 port: int = 5432,
+                 database: str = "license_plate_db",
+                 user: str = "postgres",
+                 password: str = "postgres"):
+        """Initialize database connection"""
+        self.connection_params = {
+            'host': host,
+            'port': port,
+            'database': database,
+            'user': user,
+            'password': password
+>>>>>>> bef3ead3623c9edc3503dd54c89a31fbe9e9b6b8
         }
         self.conn = None
         self.connect()
@@ -53,6 +77,7 @@ class PlateDatabase:
         """Establish database connection"""
         try:
             self.conn = psycopg2.connect(**self.connection_params)
+<<<<<<< HEAD
             logger.info(f"Connected to PostgreSQL database: {self.connection_params['database']}")
         except psycopg2.Error as e:
             logger.error(f"Database connection failed: {e}")
@@ -120,21 +145,42 @@ class PlateDatabase:
                 int(camera_id)
             except (ValueError, TypeError):
                 raise TypeError(f"camera_id must be an integer, got {type(camera_id)}")
+=======
+            print(f"✓ Connected to PostgreSQL database: {self.connection_params['database']}")
+        except psycopg2.Error as e:
+            print(f"✗ Database connection failed: {e}")
+            raise
+    
+    def ensure_connection(self):
+        """Ensure database connection is alive"""
+        try:
+            if self.conn is None or self.conn.closed:
+                self.connect()
+        except:
+            self.connect()
+>>>>>>> bef3ead3623c9edc3503dd54c89a31fbe9e9b6b8
     
     def save_plate(self, 
                    plate_number: str, 
                    confidence: float = None,
                    camera_id: str = 'default',
+<<<<<<< HEAD
                    detected_at: datetime = None,
                    dedup_window_seconds: int = 30) -> Optional[int]:
         """
         Save a detected plate to the database with deduplication
+=======
+                   detected_at: datetime = None) -> int:
+        """
+        Save a detected plate to the database
+>>>>>>> bef3ead3623c9edc3503dd54c89a31fbe9e9b6b8
         
         Args:
             plate_number: The license plate number detected
             confidence: OCR confidence score (0-1)
             camera_id: Identifier for the camera
             detected_at: Timestamp of detection (defaults to now)
+<<<<<<< HEAD
             dedup_window_seconds: Don't save if same plate detected within this window
         
         Returns:
@@ -149,11 +195,18 @@ class PlateDatabase:
         self._validate_plate_number(plate_number)
         self._validate_confidence(confidence)
         
+=======
+        
+        Returns:
+            id: The database ID of the inserted record
+        """
+>>>>>>> bef3ead3623c9edc3503dd54c89a31fbe9e9b6b8
         self.ensure_connection()
         
         if detected_at is None:
             detected_at = datetime.now()
         
+<<<<<<< HEAD
         # 2. Setup Deduplication Query
         dedup_query = """
             SELECT id, detected_at 
@@ -195,6 +248,24 @@ class PlateDatabase:
         except psycopg2.Error as e:
             self.conn.rollback()
             logger.error(f"Failed to save plate '{plate_number}': {e}")
+=======
+        query = """
+            INSERT INTO detected_plates (plate_number, detected_at, confidence, camera_id)
+            VALUES (%s, %s, %s, %s)
+            RETURNING id;
+        """
+        
+        try:
+            with self.conn.cursor() as cur:
+                cur.execute(query, (plate_number, detected_at, confidence, camera_id))
+                plate_id = cur.fetchone()[0]
+                self.conn.commit()
+                print(f"✓ Saved plate '{plate_number}' to database (ID: {plate_id})")
+                return plate_id
+        except psycopg2.Error as e:
+            self.conn.rollback()
+            print(f"✗ Failed to save plate: {e}")
+>>>>>>> bef3ead3623c9edc3503dd54c89a31fbe9e9b6b8
             raise
     
     def get_recent_plates(self, limit: int = 50) -> List[Dict]:
@@ -211,11 +282,17 @@ class PlateDatabase:
         try:
             with self.conn.cursor(cursor_factory=RealDictCursor) as cur:
                 cur.execute(query, (limit,))
+<<<<<<< HEAD
                 results = cur.fetchall()
                 logger.debug(f"Fetched {len(results)} recent plates")
                 return results
         except psycopg2.Error as e:
             logger.error(f"Failed to fetch recent plates: {e}")
+=======
+                return cur.fetchall()
+        except psycopg2.Error as e:
+            print(f"✗ Failed to fetch recent plates: {e}")
+>>>>>>> bef3ead3623c9edc3503dd54c89a31fbe9e9b6b8
             return []
     
     def get_plates_today(self) -> List[Dict]:
@@ -232,11 +309,17 @@ class PlateDatabase:
         try:
             with self.conn.cursor(cursor_factory=RealDictCursor) as cur:
                 cur.execute(query)
+<<<<<<< HEAD
                 results = cur.fetchall()
                 logger.debug(f"Fetched {len(results)} plates from today")
                 return results
         except psycopg2.Error as e:
             logger.error(f"Failed to fetch today's plates: {e}")
+=======
+                return cur.fetchall()
+        except psycopg2.Error as e:
+            print(f"✗ Failed to fetch today's plates: {e}")
+>>>>>>> bef3ead3623c9edc3503dd54c89a31fbe9e9b6b8
             return []
     
     def get_plates_by_timerange(self, 
@@ -255,6 +338,7 @@ class PlateDatabase:
         try:
             with self.conn.cursor(cursor_factory=RealDictCursor) as cur:
                 cur.execute(query, (start_time, end_time))
+<<<<<<< HEAD
                 results = cur.fetchall()
                 logger.debug(f"Fetched {len(results)} plates in time range")
                 return results
@@ -272,6 +356,15 @@ class PlateDatabase:
         Returns:
             List of matching plate detections
         """
+=======
+                return cur.fetchall()
+        except psycopg2.Error as e:
+            print(f"✗ Failed to fetch plates by time range: {e}")
+            return []
+    
+    def search_plate(self, plate_number: str) -> List[Dict]:
+        """Search for specific plate number (supports partial match)"""
+>>>>>>> bef3ead3623c9edc3503dd54c89a31fbe9e9b6b8
         self.ensure_connection()
         
         query = """
@@ -284,11 +377,17 @@ class PlateDatabase:
         try:
             with self.conn.cursor(cursor_factory=RealDictCursor) as cur:
                 cur.execute(query, (f'%{plate_number}%',))
+<<<<<<< HEAD
                 results = cur.fetchall()
                 logger.debug(f"Search for '{plate_number}' found {len(results)} results")
                 return results
         except psycopg2.Error as e:
             logger.error(f"Failed to search plates: {e}")
+=======
+                return cur.fetchall()
+        except psycopg2.Error as e:
+            print(f"✗ Failed to search plates: {e}")
+>>>>>>> bef3ead3623c9edc3503dd54c89a31fbe9e9b6b8
             return []
     
     def get_plate_stats(self) -> Dict:
@@ -308,11 +407,17 @@ class PlateDatabase:
         try:
             with self.conn.cursor(cursor_factory=RealDictCursor) as cur:
                 cur.execute(query)
+<<<<<<< HEAD
                 stats = cur.fetchone()
                 logger.debug(f"Fetched database stats: {stats['total_detections']} detections")
                 return stats
         except psycopg2.Error as e:
             logger.error(f"Failed to get stats: {e}")
+=======
+                return cur.fetchone()
+        except psycopg2.Error as e:
+            print(f"✗ Failed to get stats: {e}")
+>>>>>>> bef3ead3623c9edc3503dd54c89a31fbe9e9b6b8
             return {}
     
     def get_most_seen_plates(self, limit: int = 10) -> List[Dict]:
@@ -335,6 +440,7 @@ class PlateDatabase:
         try:
             with self.conn.cursor(cursor_factory=RealDictCursor) as cur:
                 cur.execute(query, (limit,))
+<<<<<<< HEAD
                 results = cur.fetchall()
                 logger.debug(f"Fetched top {len(results)} most seen plates")
                 return results
@@ -499,6 +605,15 @@ class PlateDatabase:
         Returns:
             Number of plates deleted
         """
+=======
+                return cur.fetchall()
+        except psycopg2.Error as e:
+            print(f"✗ Failed to get most seen plates: {e}")
+            return []
+    
+    def delete_old_plates(self, days: int = 30) -> int:
+        """Delete plates older than specified days"""
+>>>>>>> bef3ead3623c9edc3503dd54c89a31fbe9e9b6b8
         self.ensure_connection()
         
         cutoff_date = datetime.now() - timedelta(days=days)
@@ -512,6 +627,7 @@ class PlateDatabase:
                 cur.execute(query, (cutoff_date,))
                 deleted_count = cur.rowcount
                 self.conn.commit()
+<<<<<<< HEAD
                 logger.info(f"Deleted {deleted_count} plates older than {days} days")
                 return deleted_count
         except psycopg2.Error as e:
@@ -534,11 +650,24 @@ class PlateDatabase:
             'connected': self.conn is not None and not self.conn.closed
         }
     
+=======
+                print(f"✓ Deleted {deleted_count} plates older than {days} days")
+                return deleted_count
+        except psycopg2.Error as e:
+            self.conn.rollback()
+            print(f"✗ Failed to delete old plates: {e}")
+            return 0
+    
+>>>>>>> bef3ead3623c9edc3503dd54c89a31fbe9e9b6b8
     def close(self):
         """Close database connection"""
         if self.conn and not self.conn.closed:
             self.conn.close()
+<<<<<<< HEAD
             logger.info("Database connection closed")
+=======
+            print("✓ Database connection closed")
+>>>>>>> bef3ead3623c9edc3503dd54c89a31fbe9e9b6b8
     
     def __enter__(self):
         """Context manager entry"""
@@ -549,6 +678,7 @@ class PlateDatabase:
         self.close()
 
 
+<<<<<<< HEAD
 # Example usage and testing
 if __name__ == "__main__":
     print("="*60)
@@ -629,3 +759,24 @@ if __name__ == "__main__":
 
 
 
+=======
+# Example usage
+if __name__ == "__main__":
+    # Test database operations
+    with PlateDatabase() as db:
+        # Save a test plate
+        plate_id = db.save_plate("ABC123", confidence=0.95)
+        
+        # Get recent plates
+        recent = db.get_recent_plates(limit=10)
+        print(f"\nRecent plates: {len(recent)}")
+        for plate in recent:
+            print(f"  {plate['plate_number']} - {plate['detected_at']}")
+        
+        # Get stats
+        stats = db.get_plate_stats()
+        print(f"\nDatabase stats:")
+        print(f"  Total detections: {stats['total_detections']}")
+        print(f"  Unique plates: {stats['unique_plates']}")
+        print(f"  Avg confidence: {stats['avg_confidence']:.2f}")
+>>>>>>> bef3ead3623c9edc3503dd54c89a31fbe9e9b6b8

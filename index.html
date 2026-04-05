@@ -188,11 +188,10 @@
       <button class="tab-btn" data-tab="checkin">CHECK IN</button>
     </div>
 
-    <!-- FIND VEHICLE TAB -->
     <div id="find" class="tab active">
       <div class="form-group">
         <label>License Plate</label>
-        <input type="text" id="findPlate" placeholder="DONOTASK" autocomplete="off">
+        <input type="text" id="findPlate" placeholder="ABC-1234" autocomplete="off">
       </div>
       <button onclick="findVehicle()">🔍 FIND VEHICLE</button>
       <div id="findMsg" class="message"></div>
@@ -214,19 +213,18 @@
 
       <div id="findLoading" class="loading">
         <div class="spinner"></div>
-        <p>Loading...</p>
+        <p>Searching...</p>
       </div>
     </div>
 
-    <!-- CHECK-IN TAB -->
     <div id="checkin" class="tab">
       <div class="form-group">
         <label>License Plate</label>
-        <input type="text" id="checkPlate" placeholder="DONOTASK" autocomplete="off">
+        <input type="text" id="checkPlate" placeholder="ABC-1234" autocomplete="off">
       </div>
       <div class="form-group">
         <label>Floor</label>
-        <input type="number" id="checkFloor" placeholder="2" min="1" max="5" autocomplete="off">
+        <input type="number" id="checkFloor" placeholder="2" min="1" max="5">
       </div>
       <div class="form-group">
         <label>Spot</label>
@@ -240,129 +238,17 @@
   <script>
     const API_BASE_URL = "http://localhost:5000";
     const LOCAL_VEHICLES_KEY = "fms_savedVehicles";
-    const LOCAL_HISTORY_KEY = "fms_parkingHistory";
-
-    function currentUser() {
-      return localStorage.getItem("fms_currentUser") || "";
-    }
 
     function normalizePlate(plate) {
       return String(plate || "").trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
-    }
-
-    function getLocalVehicles() {
-      try {
-        const parsed = JSON.parse(localStorage.getItem(LOCAL_VEHICLES_KEY) || "[]");
-        return Array.isArray(parsed) ? parsed : [];
-      } catch {
-        return [];
-      }
-    }
-
-    function setLocalVehicles(items) {
-      localStorage.setItem(LOCAL_VEHICLES_KEY, JSON.stringify(items));
-    }
-
-    function upsertLocalVehicle(token, plate) {
-      const normalized = normalizePlate(plate);
-      if (!token || !normalized) return;
-
-      const vehicles = getLocalVehicles();
-      const index = vehicles.findIndex((item) => item.token === token && normalizePlate(item.license_plate) === normalized);
-      const payload = {
-        id: `local-${normalized}`,
-        token,
-        vehicle_name: normalized,
-        license_plate: normalized,
-        created_at: new Date().toISOString()
-      };
-
-      if (index >= 0) {
-        vehicles[index] = { ...vehicles[index], ...payload };
-      } else {
-        vehicles.unshift(payload);
-      }
-
-      setLocalVehicles(vehicles);
-    }
-
-    function getLocalParkingHistory() {
-      try {
-        const parsed = JSON.parse(localStorage.getItem(LOCAL_HISTORY_KEY) || "[]");
-        return Array.isArray(parsed) ? parsed : [];
-      } catch {
-        return [];
-      }
-    }
-
-    function setLocalParkingHistory(items) {
-      localStorage.setItem(LOCAL_HISTORY_KEY, JSON.stringify(items));
-    }
-
-    function appendLocalParkingHistory(token, plate, floor, lot) {
-      const normalized = normalizePlate(plate);
-      if (!token || !normalized) return;
-
-      const history = getLocalParkingHistory();
-      history.unshift({
-        source: "local",
-        token,
-        vehicle_name: normalized,
-        license_plate: normalized,
-        floor,
-        lot,
-        spot_number: `F${floor}-S${lot}`,
-        parking_area: `Floor ${floor}`,
-        check_in_time: new Date().toISOString(),
-        check_out_time: null
-      });
-
-      setLocalParkingHistory(history.slice(0, 500));
-    }
-
-    async function safeJson(response) {
-      const text = await response.text();
-      try {
-        return JSON.parse(text);
-      } catch {
-        return { message: text };
-      }
-    }
-
-    async function ensureVehicleRegistered(token, plate) {
-      if (!token || !plate) return;
-
-      upsertLocalVehicle(token, plate);
-
-      try {
-        const response = await fetch(`${API_BASE_URL}/api/vehicles`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            token,
-            licensePlate: plate,
-            vehicleName: plate
-          })
-        });
-
-        if (response.ok) return;
-        const data = await safeJson(response);
-        const message = String(data?.message || "").toLowerCase();
-        if (message.includes("already registered")) return;
-        console.warn("Vehicle registration warning:", data?.message || "Unknown");
-      } catch (error) {
-        console.warn("Vehicle registration request failed:", error);
-      }
     }
 
     // Tab switching
     document.querySelectorAll('.tab-btn').forEach(btn => {
       btn.addEventListener('click', function() {
         const tabName = this.getAttribute('data-tab');
-        
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        
         document.getElementById(tabName).classList.add('active');
         this.classList.add('active');
       });
@@ -380,8 +266,7 @@
     }
 
     async function findVehicle() {
-      const plate = (document.getElementById("findPlate").value || "").trim().toUpperCase();
-      
+      const plate = normalizePlate(document.getElementById("findPlate").value);
       if (!plate) {
         showMessage('findMsg', '❌ Please enter a license plate', 'error');
         return;
@@ -394,7 +279,6 @@
       try {
         const response = await fetch(`${API_BASE_URL}/api/vehicle/find/${encodeURIComponent(plate)}`);
         const data = await response.json();
-
         document.getElementById('findLoading').classList.remove('show');
 
         if (!response.ok) {
@@ -402,44 +286,40 @@
           return;
         }
 
-        // Display results
         const vehicleData = data.data || {};
         document.getElementById('resultFloor').textContent = vehicleData.floor || '—';
         document.getElementById('resultSpot').textContent = vehicleData.spotNumber || vehicleData.lot || '—';
         
         const parkedTime = vehicleData.parkedSince ? new Date(vehicleData.parkedSince).toLocaleString() : 'Unknown';
-        document.getElementById('resultMeta').innerHTML = `
-          <strong>${vehicleData.vehiclePlate || plate}</strong><br>
-          Parked: ${parkedTime}
-        `;
+        document.getElementById('resultMeta').innerHTML = `<strong>${plate}</strong><br>Parked: ${parkedTime}`;
 
         document.getElementById('findResult').classList.add('show');
         showMessage('findMsg', '✅ Vehicle found!', 'success');
       } catch (error) {
-        console.error('Error:', error);
         document.getElementById('findLoading').classList.remove('show');
-        showMessage('findMsg', `❌ Backend error: ${error.message}`, 'error');
+        showMessage('findMsg', `❌ Connection error. Is the server running?`, 'error');
       }
     }
 
     async function checkIn() {
-      const plate = normalizePlate(document.getElementById("checkPlate").value || "");
+      const plate = normalizePlate(document.getElementById("checkPlate").value);
       const floor = document.getElementById("checkFloor").value;
-      const spot = (document.getElementById("checkSpot").value || "").trim();
-      const token = currentUser();
+      const spot = document.getElementById("checkSpot").value.trim();
 
       if (!plate || !floor || !spot) {
         showMessage('checkinMsg', '❌ Please fill all fields', 'error');
         return;
       }
 
-      hideMessage('checkinMsg');
-
       try {
+<<<<<<< HEAD
         await ensureVehicleRegistered(token, plate);
         appendLocalParkingHistory(token, plate, floor, spot);
 
         const response = await fetch(`${API_BASE_URL}/api/vehicle/checkin`, {
+=======
+        const response = await fetch(`${API_BASE_URL}/api/detection/record`, {
+>>>>>>> bef3ead3623c9edc3503dd54c89a31fbe9e9b6b8
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -453,9 +333,8 @@
         });
 
         const data = await response.json();
-
         if (!response.ok) {
-          showMessage('checkinMsg', `⚠️ Saved to My Vehicles & History, but check-in failed: ${data.message || 'Unknown error'}`, 'error');
+          showMessage('checkinMsg', `❌ Error: ${data.message}`, 'error');
           return;
         }
 
@@ -464,8 +343,7 @@
         document.getElementById("checkFloor").value = '';
         document.getElementById("checkSpot").value = '';
       } catch (error) {
-        console.error('Error:', error);
-        showMessage('checkinMsg', `❌ Backend error: ${error.message}`, 'error');
+        showMessage('checkinMsg', `❌ Server connection failed.`, 'error');
       }
     }
   </script>
