@@ -48,14 +48,16 @@ class VehicleDatabase:
     
     def connect(self):
         """Establish database connection"""
-        try:
-            self.conn = psycopg2.connect(**self.connection_params)
-            logger.info("✓ VehicleDatabase connected to PostgreSQL")
-            # after connecting, ensure vehicles schema is prepared
-            self._create_tables()
-        except psycopg2.Error as e:
-            logger.error(f"✗ VehicleDatabase connection failed: {e}")
-            raise
+    try:
+        self.conn = psycopg2.connect(**self.connection_params)
+        logger.info("✓ VehicleDatabase connected to PostgreSQL")
+    except psycopg2.OperationalError as e:
+        logger.error(f"✗ VehicleDatabase connection failed: {e}")
+        logger.error("⚠️  Make sure PostgreSQL is running on port 5432")
+        self.conn = None  # ✅ Don't crash - gracefully handle error
+    except psycopg2.Error as e:
+        logger.error(f"✗ VehicleDatabase connection failed: {e}")
+        self.conn = None  # ✅ Don't crash
     
     def ensure_connection(self):
         """Ensure database connection is alive"""
@@ -478,6 +480,25 @@ class VehicleDatabase:
             self.conn.rollback()
             logger.error(f"✗ Failed to update vehicle: {e}")
             return False
+    def update_location_with_consensus(self, plate, floor, spot, camera_id):
+        self.ensure_connection()
+    with self.conn.cursor() as cur:
+        # 1. Log the individual camera's report
+        cur.execute("INSERT INTO observations (plate, floor, spot, camera_id) VALUES (%s, %s, %s, %s)",
+                    (plate, floor, spot, camera_id))
+        
+        # 2. Find the 'Consensus' winner (most reported spot for this plate in last 2 mins)
+        cur.execute("""
+            SELECT floor, spot FROM observations 
+            WHERE plate = %s AND seen_at > NOW() - INTERVAL '2 minutes'
+            GROUP BY floor, spot ORDER BY COUNT(*) DESC LIMIT 1
+        """, (plate,))
+        
+        winner = cur.fetchone()
+        if winner:
+            cur.execute("UPDATE vehicles SET current_floor=%s, current_spot=%s WHERE plate=%s",
+                        (winner[0], winner[1], plate))
+        self.conn.commit()
     
     def delete_vehicle(self, vehicle_id: int, user_id: int) -> bool:
         """
