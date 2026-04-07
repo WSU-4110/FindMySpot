@@ -6,213 +6,64 @@ import jwt
 import os
 import logging
 from typing import Optional, Dict
+from exceptions import DatabaseUnavailableError
 
-
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
 logger = logging.getLogger(__name__)
 
-# JWT Secret Key - IMPORTANT: In production, load from environment variable
-SECRET_KEY = os.getenv('JWT_SECRET_KEY', 'your-secret-key-change-this-in-production')
-
-# JWT expiration time (24 hours)
-JWT_EXPIRATION_HOURS = 24
-
 class AuthDatabase:
-    """Handle all authentication-related database operations"""
-    
-    def __init__(self, 
-                 host: str = None,
-                 port: int = None,
-                 database: str = None,
-                 user: str = None,
-                 password: str = None):
-        """
-        Initialize database connection for authentication
-        
-        Uses environment variables if parameters not provided:
-        - DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD
-        """
-        self.connection_params = {
-            'host': host or os.getenv('DB_HOST', 'localhost'),
-            'port': port or int(os.getenv('DB_PORT', 5432)),
-            'database': database or os.getenv('DB_NAME', 'license_plate_db'),
-            'user': user or os.getenv('DB_USER', 'postgres'),
-            'password': password or os.getenv('DB_PASSWORD', 'postgres')
-        }
+    def __init__(self, **params):
+        self.params = params
         self.conn = None
-        self.connect()
+        self.SECRET_KEY = os.getenv('JWT_SECRET_KEY', 'dev-key-123')
 
     def connect(self):
-           """Establish database connection"""
-           try:
-                self.conn = psycopg2.connect(**self.connection_params)
-                logger.info(f"Connected to database: {self.connection_params['database']}")
-           except psycopg2.Error as e:
-                logger.error(f"Database connection failed: {e}")
-                raise
-    
+        try:
+            # Added a timeout so it doesn't hang if Postgres is down
+            self.conn = psycopg2.connect(connect_timeout=3, **self.params)
+        except psycopg2.OperationalError:
+            self.conn = None
+
     def ensure_connection(self):
-        """Ensure database connection is alive"""
-        try:
-            if self.conn is None or self.conn.closed:
-                self.connect()
-        except:
+        if not self.conn or self.conn.closed:
             self.connect()
-    
+            if not self.conn:
+                raise DatabaseUnavailableError()
+
     def _hash_password(self, password: str) -> str:
-        """
-        Hash a password using bcrypt
-        
-        Args:
-            password: Plain text password
-            
-        Returns:
-            Hashed password as string
-        """
-        # Convert password to bytes
-        password_bytes = password.encode('utf-8')
-        
-        # Generate salt and hash
-        salt = bcrypt.gensalt()
-        hashed = bcrypt.hashpw(password_bytes, salt)
-        
-        # Return as string for database storage
-        return hashed.decode('utf-8')
-    
-    def _verify_password_hash(self, password: str, password_hash: str) -> bool:
-        """
-        Verify a password against its hash
-        
-        Args:
-            password: Plain text password to verify
-            password_hash: Stored hash to check against
-            
-        Returns:
-            True if password matches, False otherwise
-        """
-        try:
-            password_bytes = password.encode('utf-8')
-            hash_bytes = password_hash.encode('utf-8')
-            return bcrypt.checkpw(password_bytes, hash_bytes)
-        except Exception as e:
-            logger.error(f"Password verification error: {e}")
-            return False
-    
-    def create_user(self, 
-                   email: str, 
-                   password: str, 
-                   username: str,
-                   role: str = 'user') -> Optional[int]:
-        """
-        Create a new user in the database
-        
-        Args:
-            email: User's email address (must be unique)
-            password: Plain text password (will be hashed)
-            username: Display name for user
-            role: User role ('user' or 'admin'), defaults to 'user'
-            
-        Returns:
-            user_id if successful, None if user already exists
-            
-        Raises:
-            ValueError: If inputs are invalid
-            psycopg2.Error: If database operation fails
-        """
-        # Validate inputs
-        if not email or '@' not in email:
-            raise ValueError("Invalid email address")
-        
-        if not password or len(password) < 8:
-            raise ValueError("Password must be at least 8 characters")
-        
-        if not username or len(username) < 3:
-            raise ValueError("Username must be at least 3 characters")
-        
-        if role not in ['user', 'admin']:
-            raise ValueError("Role must be 'user' or 'admin'")
-        
+        return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+
+    def _verify_password_hash(self, password: str, hashed: str) -> bool:
+        return bcrypt.checkpw(password.encode('utf-8'), hashed.encode('utf-8'))
+
+    def create_user(self, email, password, username, role='user'):
         self.ensure_connection()
-        
-        # Hash the password
         password_hash = self._hash_password(password)
         
         query = """
             INSERT INTO users (email, password_hash, username, role, created_at)
-            VALUES (%s, %s, %s, %s, %s)
-            RETURNING id;
+            VALUES (%s, %s, %s, %s, %s) RETURNING id;
         """
-        
         try:
             with self.conn.cursor() as cur:
-                cur.execute(query, (
-                    email.lower(),  # Store email in lowercase
-                    password_hash,
-                    username,
-                    role,
-                    datetime.now()
-                ))
+                cur.execute(query, (email.lower(), password_hash, username, role, datetime.now()))
                 user_id = cur.fetchone()[0]
                 self.conn.commit()
-                
-                logger.info(f"Created user: {username} (ID: {user_id}, email: {email})")
+                logger.info(f"Created user: {username} (ID: {user_id})")
                 return user_id
-                
-        except psycopg2.IntegrityError as e:
+        except psycopg2.IntegrityError:
             self.conn.rollback()
-            if 'unique constraint' in str(e).lower():
-                logger.warning(f"User creation failed: Email {email} already exists")
-                return None
-            raise
-        except psycopg2.Error as e:
-            self.conn.rollback()
-            logger.error(f"Failed to create user: {e}")
-            raise
-    
+            logger.warning(f"User creation failed: Email {email} already exists")
+            return None
+
     def verify_password(self, email: str, password: str) -> bool:
-        """
-        Verify user's password
-        
-        Args:
-            email: User's email address
-            password: Plain text password to verify
-            
-        Returns:
-            True if password is correct, False otherwise
-        """
         self.ensure_connection()
-        
-        query = """
-            SELECT password_hash FROM users
-            WHERE email = %s;
-        """
-        
-        try:
-            with self.conn.cursor() as cur:
-                cur.execute(query, (email.lower(),))
-                result = cur.fetchone()
-                
-                if not result:
-                    logger.warning(f"Password verification failed: User {email} not found")
-                    return False
-                
-                password_hash = result[0]
-                is_valid = self._verify_password_hash(password, password_hash)
-                
-                if is_valid:
-                    logger.info(f"Password verified successfully for {email}")
-                else:
-                    logger.warning(f"Invalid password attempt for {email}")
-                
-                return is_valid
-                
-        except psycopg2.Error as e:
-            logger.error(f"Password verification error: {e}")
-            return False
+        query = "SELECT password_hash FROM users WHERE email = %s;"
+        with self.conn.cursor() as cur:
+            cur.execute(query, (email.lower(),))
+            res = cur.fetchone()
+            if res and self._verify_password_hash(password, res[0]):
+                return True
+        return False
     
     def get_user_by_email(self, email: str) -> Optional[Dict]:
         """
