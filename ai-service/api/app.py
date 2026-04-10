@@ -42,6 +42,8 @@ BACKEND_API_URL = "http://localhost:3000/api/detection/record"
 # Get camera ID from environment variable (e.g., 'set CAMERA_ID=3' for Floor 2, Lot 2)
 # Default to 0 if not set
 CAMERA_ID = int(os.environ.get('CAMERA_ID', '0'))
+PLATE_RATIO_MIN = float(os.environ.get('PLATE_RATIO_MIN', '1.2'))
+PLATE_RATIO_MAX = float(os.environ.get('PLATE_RATIO_MAX', '8.0'))
 CAMERA_CONFIG = load_camera_config()
 
 # FIXED: These are now loaded from camera_config.json instead of being randomly assigned
@@ -206,7 +208,7 @@ def find_plate_candidates(gray_frame):
         area = w * h
         if area < 800 or area > 90000:
             continue
-        if aspect_ratio < 1.6 or aspect_ratio > 7.0:
+        if aspect_ratio < PLATE_RATIO_MIN or aspect_ratio > PLATE_RATIO_MAX:
             continue
         if h < 14:
             continue
