@@ -1,3 +1,4 @@
+//BUG #46 applied
 const { pool } = require('../config/db');
 
 class ParkingSpot {
