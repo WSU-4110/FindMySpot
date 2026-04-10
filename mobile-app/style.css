@@ -40,19 +40,24 @@
         linear-gradient(180deg, var(--bg1), var(--bg2));
       display:flex;
       justify-content:center;
+      align-items:center;
+      min-height: 100dvh;
       padding: 26px 12px;
     }
 
     /* Phone shell */
     .phone{
-      width: 390px;
-      max-width: 96vw;
+      width: min(420px, 100%);
+      height: 100dvh;
+      max-height: 900px;
+      transform: scale(1.2);
+      transform-origin: center;
       border: 10px solid #1e5e59;
-      border-radius: 22px;
-      overflow:hidden;
+      border-radius: 28px;
+      overflow: hidden;
       background: linear-gradient(#eaf1ef, #cfdad7);
       box-shadow: var(--shadow-lg);
-      position:relative;
+      position: relative;
     }
 
     /* Header */

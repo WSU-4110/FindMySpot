@@ -1,18 +1,12 @@
 @echo off
-REM FindMySpot Database Setup Script for Windows
-REM This script sets up the database with all migrations
-
 setlocal enabledelayedexpansion
 
-REM PostgreSQL connection details
 set PGHOST=localhost
 set PGPORT=5432
 set PGUSER=postgres
-set PGPASSWORD=
+set PGPASSWORD=mir3863
 
-REM PostgreSQL path
-set PSQL="C:\Program Files\PostgreSQL\18\bin\psql"
-
+set PSQL="C:\Users\mirza\OneDrive - Wayne State University\CSC 4710\bin\psql.exe"
 echo.
 echo ========================================
 echo FindMySpot Database Setup
@@ -46,9 +40,5 @@ echo.
 echo ========================================
 echo Database setup completed successfully!
 echo ========================================
-echo.
-echo You can now:
-echo 1. Start backend: cd backend && npm run dev
-echo 2. Test system: python test_system.py
 echo.
 pause
