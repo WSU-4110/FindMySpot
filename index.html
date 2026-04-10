@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -181,7 +181,7 @@
 </head>
 <body>
   <div class="container">
-    <h1>🚗 FindMySpot</h1>
+    <h1>FindMySpot</h1>
     
     <div class="tab-buttons">
       <button class="tab-btn active" data-tab="find">FIND VEHICLE</button>
@@ -194,19 +194,19 @@
         <label>License Plate</label>
         <input type="text" id="findPlate" placeholder="DONOTASK" autocomplete="off">
       </div>
-      <button onclick="findVehicle()">🔍 FIND VEHICLE</button>
+      <button onclick="findVehicle()">FIND VEHICLE</button>
       <div id="findMsg" class="message"></div>
       
       <div id="findResult" class="result">
-        <h3>✅ Vehicle Found!</h3>
+        <h3>Vehicle Found!</h3>
         <div class="stat">
           <div class="stat-box">
             <div class="stat-label">Floor</div>
-            <div class="stat-value" id="resultFloor">—</div>
+            <div class="stat-value" id="resultFloor">-</div>
           </div>
           <div class="stat-box">
             <div class="stat-label">Spot</div>
-            <div class="stat-value" id="resultSpot">—</div>
+            <div class="stat-value" id="resultSpot">-</div>
           </div>
         </div>
         <div id="resultMeta" style="color: #666; font-size: 14px; margin: 15px 0;"></div>
@@ -232,7 +232,7 @@
         <label>Spot</label>
         <input type="text" id="checkSpot" placeholder="F2-S1" autocomplete="off">
       </div>
-      <button onclick="checkIn()">✓ CHECK IN</button>
+      <button onclick="checkIn()">CHECK IN</button>
       <div id="checkinMsg" class="message"></div>
     </div>
   </div>
@@ -383,7 +383,7 @@
       const plate = (document.getElementById("findPlate").value || "").trim().toUpperCase();
       
       if (!plate) {
-        showMessage('findMsg', '❌ Please enter a license plate', 'error');
+        showMessage('findMsg', 'ERROR: Please enter a license plate', 'error');
         return;
       }
 
@@ -398,14 +398,14 @@
         document.getElementById('findLoading').classList.remove('show');
 
         if (!response.ok) {
-          showMessage('findMsg', `❌ ${data.message || 'Vehicle not found'}`, 'error');
+          showMessage('findMsg', `ERROR: ${data.message || 'Vehicle not found'}`, 'error');
           return;
         }
 
         // Display results
         const vehicleData = data.data || {};
-        document.getElementById('resultFloor').textContent = vehicleData.floor || '—';
-        document.getElementById('resultSpot').textContent = vehicleData.spotNumber || vehicleData.lot || '—';
+        document.getElementById('resultFloor').textContent = vehicleData.floor || '-';
+        document.getElementById('resultSpot').textContent = vehicleData.spotNumber || vehicleData.lot || '-';
         
         const parkedTime = vehicleData.parkedSince ? new Date(vehicleData.parkedSince).toLocaleString() : 'Unknown';
         document.getElementById('resultMeta').innerHTML = `
@@ -414,11 +414,11 @@
         `;
 
         document.getElementById('findResult').classList.add('show');
-        showMessage('findMsg', '✅ Vehicle found!', 'success');
+        showMessage('findMsg', 'SUCCESS: Vehicle found!', 'success');
       } catch (error) {
         console.error('Error:', error);
         document.getElementById('findLoading').classList.remove('show');
-        showMessage('findMsg', `❌ Backend error: ${error.message}`, 'error');
+        showMessage('findMsg', `ERROR: Backend error: ${error.message}`, 'error');
       }
     }
 
@@ -429,7 +429,7 @@
       const token = currentUser();
 
       if (!plate || !floor || !spot) {
-        showMessage('checkinMsg', '❌ Please fill all fields', 'error');
+        showMessage('checkinMsg', 'ERROR: Please fill all fields', 'error');
         return;
       }
 
@@ -455,17 +455,17 @@
         const data = await response.json();
 
         if (!response.ok) {
-          showMessage('checkinMsg', `⚠️ Saved to My Vehicles & History, but check-in failed: ${data.message || 'Unknown error'}`, 'error');
+          showMessage('checkinMsg', `WARNING: Saved to My Vehicles and History, but check-in failed: ${data.message || 'Unknown error'}`, 'error');
           return;
         }
 
-        showMessage('checkinMsg', `✅ Checked in ${plate} at Floor ${floor}, ${spot}`, 'success');
+        showMessage('checkinMsg', `SUCCESS: Checked in ${plate} at Floor ${floor}, ${spot}`, 'success');
         document.getElementById("checkPlate").value = '';
         document.getElementById("checkFloor").value = '';
         document.getElementById("checkSpot").value = '';
       } catch (error) {
         console.error('Error:', error);
-        showMessage('checkinMsg', `❌ Backend error: ${error.message}`, 'error');
+        showMessage('checkinMsg', `ERROR: Backend error: ${error.message}`, 'error');
       }
     }
   </script>
