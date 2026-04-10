@@ -1,4 +1,5 @@
 const { ParkingSpot, Vehicle, ParkingSession, SecurityFlag } = require('../models/parking');
+const { User } = require('../models/user');
 
 // Track auto-checkout timers (in-memory)
 const autoCheckoutTimers = {};
@@ -388,22 +389,40 @@ class ParkingController {
 
   // FR12 - Scan and persist security flags
   static async runSecurityFlagScan(req, res) {
-    try {
-      const { maxDurationHours = 24 } = req.query;
-      const result = await ParkingSession.scanAndFlagSecurityIssues(maxDurationHours);
+  try {
+    const { token } = req.params;
 
-      res.json({
-        success: true,
-        message: 'Security flag scan completed.',
-        data: result
-      });
-    } catch (error) {
-      res.status(500).json({
+    if (!token) {
+      return res.status(401).json({
         success: false,
-        message: error.message
+        message: 'Token is required'
       });
     }
+
+    const user = await User.getByToken(token);
+
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid or expired token'
+      });
+    }
+
+    const { maxDurationHours = 24 } = req.query;
+    const result = await ParkingSession.scanAndFlagSecurityIssues(maxDurationHours);
+
+    res.json({
+      success: true,
+      message: 'Security flag scan completed.',
+      data: result
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
   }
+}
 
   static async getOpenSecurityFlags(req, res) {
     try {
