@@ -312,14 +312,7 @@
       }
 
       try {
-<<<<<<< HEAD
-        await ensureVehicleRegistered(token, plate);
-        appendLocalParkingHistory(token, plate, floor, spot);
-
-        const response = await fetch(`${API_BASE_URL}/api/vehicle/checkin`, {
-=======
         const response = await fetch(`${API_BASE_URL}/api/detection/record`, {
->>>>>>> bef3ead3623c9edc3503dd54c89a31fbe9e9b6b8
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
