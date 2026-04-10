@@ -12,7 +12,7 @@ router.get('/stats', ParkingController.getOccupancyStats);
 router.get('/stats/live', ParkingController.getOccupancyStats);
 router.get('/reports/usage', ParkingController.getUsageAnalyticsReport);
 router.get('/security/flags', ParkingController.getOpenSecurityFlags);
-router.post('/security/scan', ParkingController.runSecurityFlagScan);
+router.post('/security/scan/:token', ParkingController.runSecurityFlagScan);
 
 // Parking session routes
 router.post('/checkin', ParkingController.checkIn);
