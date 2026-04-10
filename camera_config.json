@@ -5,90 +5,70 @@
       "floor": 1,
       "lot": 1,
       "name": "Floor 1 - Lot 1",
-      "enabled": true,
-      "is_entry_camera": true,
-      "is_exit_camera": false
+      "enabled": true
     },
     {
       "camera_id": 1,
       "floor": 1,
       "lot": 2,
       "name": "Floor 1 - Lot 2",
-      "enabled": true,
-      "is_entry_camera": true,
-      "is_exit_camera": false
+      "enabled": true
     },
     {
       "camera_id": 2,
       "floor": 2,
       "lot": 1,
       "name": "Floor 2 - Lot 1",
-      "enabled": true,
-      "is_entry_camera": true,
-      "is_exit_camera": false
+      "enabled": true
     },
     {
       "camera_id": 3,
       "floor": 2,
       "lot": 2,
       "name": "Floor 2 - Lot 2",
-      "enabled": true,
-      "is_entry_camera": true,
-      "is_exit_camera": false
+      "enabled": true
     },
     {
       "camera_id": 4,
       "floor": 3,
       "lot": 1,
       "name": "Floor 3 - Lot 1",
-      "enabled": true,
-      "is_entry_camera": true,
-      "is_exit_camera": false
+      "enabled": true
     },
     {
       "camera_id": 5,
       "floor": 3,
       "lot": 2,
       "name": "Floor 3 - Lot 2",
-      "enabled": true,
-      "is_entry_camera": true,
-      "is_exit_camera": false
+      "enabled": true
     },
     {
       "camera_id": 6,
       "floor": 4,
       "lot": 1,
       "name": "Floor 4 - Lot 1",
-      "enabled": true,
-      "is_entry_camera": true,
-      "is_exit_camera": false
+      "enabled": true
     },
     {
       "camera_id": 7,
       "floor": 4,
       "lot": 2,
       "name": "Floor 4 - Lot 2",
-      "enabled": true,
-      "is_entry_camera": true,
-      "is_exit_camera": false
+      "enabled": true
     },
     {
       "camera_id": 8,
       "floor": 5,
       "lot": 1,
       "name": "Floor 5 - Lot 1",
-      "enabled": true,
-      "is_entry_camera": true,
-      "is_exit_camera": false
+      "enabled": true
     },
     {
       "camera_id": 9,
       "floor": 5,
       "lot": 2,
       "name": "Floor 5 - Lot 2",
-      "enabled": true,
-      "is_entry_camera": true,
-      "is_exit_camera": false
+      "enabled": true
     }
   ]
 }
