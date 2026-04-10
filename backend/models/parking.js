@@ -1,3 +1,4 @@
+//BUG #46 applied
 const { pool } = require('../config/db');
 
 class ParkingSpot {
@@ -167,6 +168,7 @@ class ParkingSession {
     }
 
     const session = result.rows[0];
+
     // Update spot occupancy
     await ParkingSpot.updateOccupancy(session.floor, session.lot, false, null);
 
@@ -218,20 +220,10 @@ class ParkingSession {
       [normalizedPlate]
     );
 
-    let session = activeSessionResult.rows[0] || null;
-    let sessionActive = true;
+    const session = activeSessionResult.rows[0] || null;
 
     if (!session) {
-      const latestSessionResult = await pool.query(
-        `SELECT id, vehicle_plate, floor, lot, check_in_time, check_out_time
-         FROM parking_sessions
-         WHERE vehicle_plate = $1
-         ORDER BY check_in_time DESC
-         LIMIT 1`,
-        [normalizedPlate]
-      );
-      session = latestSessionResult.rows[0] || null;
-      sessionActive = false;
+      return null;
     }
 
     const detectionResult = await pool.query(
@@ -242,30 +234,27 @@ class ParkingSession {
        LIMIT 1`,
       [normalizedPlate]
     );
+
     const latestDetection = detectionResult.rows[0] || null;
 
-    if (!session && !latestDetection) {
-      return null;
-    }
-
-    const floor = session?.floor ?? latestDetection?.floor ?? null;
-    const lot = session?.lot ?? latestDetection?.lot ?? null;
+    const floor = session.floor ?? latestDetection?.floor ?? null;
+    const lot = session.lot ?? latestDetection?.lot ?? null;
     const spotNumber = floor != null && lot != null ? `F${floor}-S${lot}` : null;
     const area = floor != null ? `Floor ${floor}` : null;
     const locationDescription = latestDetection?.location_description || null;
 
     return {
       vehiclePlate: normalizedPlate,
-      sessionId: session?.id || null,
+      sessionId: session.id,
       floor,
       lot,
       spotNumber,
       area,
       locationDescription,
-      checkInTime: session?.check_in_time || null,
-      checkOutTime: session?.check_out_time || null,
-      sessionActive,
-      source: session ? 'parking_session' : 'detection_only',
+      checkInTime: session.check_in_time || null,
+      checkOutTime: session.check_out_time || null,
+      sessionActive: true,
+      source: 'parking_session',
       spotDataMissing: floor == null || lot == null,
       locationOnly: floor == null && lot == null,
       detectedAt: latestDetection?.detected_at || null
