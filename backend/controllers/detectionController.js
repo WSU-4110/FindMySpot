@@ -3,6 +3,8 @@ const UserVehicle = require('../models/vehicle');
 const Notification = require('../models/notification');
 const { User } = require('../models/user');
 const { ParkingSession, Vehicle } = require('../models/parking');
+const fs = require('fs');
+const path = require('path');
 
 // Track auto-checkout timers (in-memory)
 const autoCheckoutTimers = {};
@@ -35,13 +37,40 @@ function clearAutoCheckoutTimer(licensePlate) {
   }
 }
 
-function isExitEvent(eventType, location) {
-  if (String(eventType || '').toUpperCase() === 'EXIT') {
-    return true;
+function normalizeText(value) {
+  return String(value || '').trim().toUpperCase();
+}
+
+function getCameraConfig(cameraId) {
+  try {
+    const configPath = path.join(__dirname, '../../camera_config.json');
+    const raw = fs.readFileSync(configPath, 'utf8');
+    const parsed = JSON.parse(raw);
+    const cameras = Array.isArray(parsed.cameras) ? parsed.cameras : [];
+
+    return cameras.find((camera) => {
+      return String(camera.camera_id) === String(cameraId);
+    }) || null;
+  } catch (error) {
+    console.warn(`[CONFIG] Failed to load camera_config.json: ${error.message}`);
+    return null;
+  }
+}
+
+function isExitEvent(eventType, location, cameraId) {
+  const normalizedEventType = normalizeText(eventType);
+
+  if (normalizedEventType === 'EXIT') return true;
+  if (normalizedEventType === 'ENTRY') return false;
+
+  const cameraConfig = getCameraConfig(cameraId);
+  if (cameraConfig) {
+    if (cameraConfig.is_exit_camera === true) return true;
+    if (cameraConfig.is_entry_camera === true) return false;
   }
 
-  const locationText = String(location || '').toUpperCase();
-  return locationText.includes('EXIT') || locationText.includes('GATE OUT');
+  const locationText = normalizeText(location);
+  return locationText.includes('GATE OUT') || locationText.includes('EXIT GATE');
 }
 
 class DetectionController {
@@ -69,7 +98,7 @@ class DetectionController {
 
       // Record the detection
       const normalizedPlate = String(licensePlate || '').toUpperCase().trim();
-      const exitEvent = isExitEvent(eventType, location);
+      const exitEvent = isExitEvent(eventType, location, cameraId);
 
       const detection = await DetectionEvent.recordDetection(
         normalizedPlate,
