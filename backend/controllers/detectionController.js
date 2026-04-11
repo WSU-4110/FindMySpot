@@ -2,7 +2,7 @@ const DetectionEvent = require('../models/detection');
 const UserVehicle = require('../models/vehicle');
 const Notification = require('../models/notification');
 const { User } = require('../models/user');
-const { ParkingSession, Vehicle } = require('../models/parking');
+const { ParkingSession, Vehicle, ParkingSpot } = require('../models/parking');
 const fs = require('fs');
 const path = require('path');
 
@@ -23,6 +23,15 @@ function scheduleAutoCheckout(licensePlate, delayMs = 10 * 60 * 1000) {
       console.log(`[AUTO-CHECKOUT] Vehicle ${licensePlate} auto-checked out after 10 minutes`);
     } catch (error) {
       console.error(`[AUTO-CHECKOUT] Failed to auto-checkout ${licensePlate}: ${error.message}`);
+      try {
+        const session = await ParkingSession.getActiveByVehicle(licensePlate);
+        if (session) {
+          await ParkingSpot.updateOccupancy(session.floor, session.lot, false, null);
+          console.log(`[AUTO-CHECKOUT] Force-freed spot for ${licensePlate} after failed checkout`);
+        }
+      } catch (occupancyError) {
+        console.error(`[AUTO-CHECKOUT] Also failed to free spot: ${occupancyError.message}`);
+      }
     }
     delete autoCheckoutTimers[licensePlate];
   }, delayMs);
