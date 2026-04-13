@@ -384,7 +384,10 @@ class ParkingSession {
         }
       }
 
-      if (Number(session.authorization_records) === 0) {
+      const testPrefixes = ['TEST', 'ANON', 'DEMO'];
+      const isTestPlate = testPrefixes.some(prefix => session.vehicle_plate.startsWith(prefix));
+
+      if (Number(session.authorization_records) === 0 && !isTestPlate) {
         const authFlag = await SecurityFlag.createIfMissing(
           session.id,
           session.vehicle_plate,
