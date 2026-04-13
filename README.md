@@ -248,5 +248,5 @@ Before running tests, make sure:
 - Tristan Mejia
 
 
-## For detailed information about collaboration and team contributions, visit our wiki:
+### For detailed information about collaboration and team contributions, visit our wiki:
 - [Collaboration Page](https://github.com/WSU-4110/FindMySpot/wiki/Collaboration)
