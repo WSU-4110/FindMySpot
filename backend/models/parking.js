@@ -172,6 +172,9 @@ class ParkingSession {
     // Update spot occupancy
     await ParkingSpot.updateOccupancy(session.floor, session.lot, false, null);
 
+    // Resolve any open security flags for this vehicle
+    await SecurityFlag.resolveByPlate(normalizedPlate);
+
     return session;
   }
 
@@ -444,6 +447,15 @@ class SecurityFlag {
 
     return insertResult.rows[0] || null;
   }
+
+  static async resolveByPlate(vehiclePlate) {
+    await pool.query(
+      `UPDATE security_flags
+      SET status = 'RESOLVED', resolved_at = CURRENT_TIMESTAMP
+      WHERE vehicle_plate = $1 AND status = 'OPEN'`,
+      [String(vehiclePlate || '').toUpperCase().trim()]
+    );
+}
 
   static async getOpen(limit = 100) {
     const safeLimit = Math.max(1, Math.min(Number(limit) || 100, 500));
