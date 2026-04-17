@@ -5,12 +5,14 @@ import re
 import time
 from collections import Counter, deque
 import easyocr
+from ocr_strategy import LicensePlateDetector, EasyOCRStrategy
 
 app = Flask(__name__)
 CORS(app)
 
 # Initialize EasyOCR reader
-reader = easyocr.Reader(['en'], gpu=False)
+ocr_detector = LicensePlateDetector(EasyOCRStrategy())
+
 
 <<<<<<< HEAD
 # BUG FIX #1: Camera Hardcoding (HIGH) & BUG FIX #2: Random Floor/Lot Assignment (CRITICAL)
@@ -141,13 +143,7 @@ def generate_frames():
             print(f"=== OCR Scan ===", flush=True)
             
             # Run OCR on whole frame
-            ocr_results = reader.readtext(
-                gray,
-                allowlist='ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 ',
-                text_threshold=0.2,
-                low_text=0.1,
-                detail=1,
-            )
+            ocr_results = ocr_detector.detect(gray)
             
             print(f"Found {len(ocr_results)} text regions", flush=True)
             
