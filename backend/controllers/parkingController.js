@@ -1,5 +1,8 @@
 const { ParkingSpot, Vehicle, ParkingSession, SecurityFlag } = require('../models/parking');
 const { User } = require('../models/user');
+const UserVehicle = require('../models/vehicle');
+const Notification = require('../models/notification');
+const DetectionEvent = require('../models/detection');
 
 // Track auto-checkout timers (in-memory)
 const autoCheckoutTimers = {};
@@ -189,15 +192,72 @@ class ParkingController {
         });
       }
 
-      const session = await ParkingSession.create(vehiclePlate, floor, lot);
+      const normalizedPlate = String(vehiclePlate || '').toUpperCase().trim();
+      const locationStr = `Floor ${floor}, Lot ${lot}`;
+      const session = await ParkingSession.create(normalizedPlate, floor, lot);
       
       // Schedule auto-checkout after 10 minutes
-      scheduleAutoCheckout(vehiclePlate);
+      scheduleAutoCheckout(normalizedPlate);
+
+      // Mirror camera-detection behavior so manual check-ins also generate notifications.
+      let detection = null;
+      const notifications = [];
+      const notificationErrors = [];
+
+      try {
+        detection = await DetectionEvent.recordDetection(
+          normalizedPlate,
+          floor,
+          lot,
+          locationStr,
+          0.98,
+          'MANUAL_CHECKIN',
+          null,
+          null
+        );
+      } catch (error) {
+        notificationErrors.push({
+          step: 'recordDetection',
+          error: error.message
+        });
+      }
+
+      try {
+        const matchingVehicles = await UserVehicle.getAllByLicensePlate(normalizedPlate);
+        for (const vehicle of matchingVehicles) {
+          try {
+            const notification = await Notification.create(
+              vehicle.user_id,
+              vehicle.id,
+              detection?.id || null,
+              'Vehicle Detected',
+              `Your registered license plate ${normalizedPlate} was detected at ${locationStr}`,
+              locationStr,
+              detection?.detected_at || new Date().toISOString()
+            );
+            notifications.push(notification);
+          } catch (error) {
+            notificationErrors.push({
+              userId: vehicle.user_id,
+              error: error.message
+            });
+          }
+        }
+      } catch (error) {
+        notificationErrors.push({
+          step: 'loadMatchingVehicles',
+          error: error.message
+        });
+      }
       
       res.json({
         success: true,
-        message: `Vehicle ${vehiclePlate} checked in to Floor ${floor}, Lot ${lot}`,
-        data: session
+        message: `Vehicle ${normalizedPlate} checked in to Floor ${floor}, Lot ${lot}`,
+        data: session,
+        notificationSummary: {
+          created: notifications.length,
+          errors: notificationErrors
+        }
       });
     } catch (error) {
       res.status(400).json({
