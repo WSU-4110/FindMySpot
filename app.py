@@ -311,10 +311,10 @@ while True:
                     last_printed_plate = consensus_plate
                     final_plate = consensus_plate
                     finalized_at = current_time
-                   
-                    # FIXED: Use floor and lot from camera configuration (loaded at startup)
-                    # REMOVED: random.randint(1, 5) calls that caused wrong floor/lot assignments
-                    # These values are now deterministic and based on camera location
+
+                    # Randomize location for each finalized capture.
+                    assigned_floor = random.randint(1, 5)
+                    assigned_lot = random.randint(1, 5)
                    
                     timestamp = time.strftime("%H:%M:%S")
                     print(
